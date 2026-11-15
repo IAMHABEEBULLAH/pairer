@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { query } from '../db.js';
 import { startSession, endSession, requireAuth } from '../auth.js';
-import { ah, phoneSchema, HttpError } from '../util.js';
+import { ah, phoneSchema, HttpError, AVATARS } from '../util.js';
 
 const router = Router();
 
@@ -14,6 +14,7 @@ const registerSchema = z
     password: z.string().min(8, 'Password must be at least 8 characters.').max(100),
     role: z.enum(['customer', 'pro']),
     phone: z.string().trim().max(20).optional().default(''),
+    avatar: z.enum(AVATARS).optional().default('initials'),
   })
   .superRefine((v, ctx) => {
     if (v.role === 'pro' && !v.phone) {
@@ -32,7 +33,7 @@ const loginSchema = z.object({
 
 async function loadMe(userId) {
   const { rows } = await query(
-    `SELECT u.id, u.name, u.email, u.role, u.phone,
+    `SELECT u.id, u.name, u.email, u.role, u.phone, u.avatar,
             p.trade, p.area, p.bio, p.rate
        FROM users u LEFT JOIN pro_profiles p ON p.user_id = u.id
       WHERE u.id = $1`,
@@ -52,9 +53,9 @@ router.post(
     let row;
     try {
       const result = await query(
-        `INSERT INTO users (name, email, password_hash, role, phone)
-         VALUES ($1, $2, $3, $4, $5) RETURNING id, role`,
-        [data.name, data.email, hash, data.role, data.phone]
+        `INSERT INTO users (name, email, password_hash, role, phone, avatar)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, role`,
+        [data.name, data.email, hash, data.role, data.phone, data.avatar]
       );
       row = result.rows[0];
     } catch (err) {

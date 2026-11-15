@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import { TRADES } from '../trades.js';
 import { Field, Notice } from '../components/Bits.jsx';
+import { PhotoPicker } from '../components/Photos.jsx';
 
 export default function PostJob() {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ export default function PostJob() {
   const [suggestion, setSuggestion] = useState(null);
   const [form, setForm] = useState({ trade: 'Plumber', area: '', description: '' });
   const [showForm, setShowForm] = useState(false);
+  const [photos, setPhotos] = useState([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
@@ -31,7 +33,11 @@ export default function PostJob() {
     setBusy(true); setError('');
     try {
       const { job } = await api.post('/jobs', form);
-      navigate(`/jobs/${job.id}`);
+      let failed = 0;
+      for (const p of photos) {
+        try { await api.upload(`/photos?jobId=${job.id}`, p.blob); } catch { failed += 1; }
+      }
+      navigate(`/jobs/${job.id}`, { state: failed ? { photoError: failed } : undefined });
     } catch (err) { setError(err.message); setBusy(false); }
   }
 
@@ -70,8 +76,11 @@ export default function PostJob() {
           <Field label="Describe the job" hint="At least 10 characters. Mention anything a pro should know before quoting.">
             <textarea className="input" required rows={4} minLength={10} maxLength={1000} value={form.description} onChange={(e) => set('description', e.target.value)} />
           </Field>
+          <Field label="Photos (optional)" hint="Up to 3. A photo helps pros quote accurately. Anyone who views the job can see them, so avoid faces and documents.">
+            <PhotoPicker items={photos} setItems={setPhotos} max={3} />
+          </Field>
           <Notice>{error}</Notice>
-          <button className="btn btn-primary" disabled={busy} style={{ justifySelf: 'start' }}>{busy ? 'Posting…' : 'Post job'}</button>
+          <button className="btn btn-primary" disabled={busy} style={{ justifySelf: 'start' }}>{busy ? (photos.length ? 'Posting and uploading…' : 'Posting…') : 'Post job'}</button>
         </form>
       )}
       {!showForm && <div style={{ marginTop: 16 }}><Notice>{error}</Notice></div>}

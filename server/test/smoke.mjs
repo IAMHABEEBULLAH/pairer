@@ -8,11 +8,15 @@ const run = Math.random().toString(36).slice(2, 8);
 
 function client() {
   let cookie = '';
-  return async (method, path, body) => {
+  return async (method, path, body, rawType) => {
+    const isRaw = Buffer.isBuffer(body);
     const res = await fetch(BASE + path, {
       method,
-      headers: { ...(body ? { 'content-type': 'application/json' } : {}), ...(cookie ? { cookie } : {}) },
-      body: body ? JSON.stringify(body) : undefined,
+      headers: {
+        ...(body ? { 'content-type': isRaw ? rawType : 'application/json' } : {}),
+        ...(cookie ? { cookie } : {}),
+      },
+      body: body ? (isRaw ? body : JSON.stringify(body)) : undefined,
     });
     const set = res.headers.get('set-cookie');
     if (set) cookie = set.split(';')[0];
@@ -147,6 +151,27 @@ assert.equal(r.data.pro.reviewCount, 1);
 assert.equal(r.data.pro.jobsDone, 1);
 assert.equal(r.data.reviews[0].customerName, 'Test'); ok('profile shows rating, jobs done, review (first name only)');
 
+// --- avatars ---
+r = await guest('POST', '/api/auth/register', { name: 'Bad Avatar', email: `bad-${run}@test.dev`, password: 'secret123', role: 'customer', avatar: 'robot' });
+assert.equal(r.status, 400); ok('unknown avatar rejected');
+
+const avatarUser = client();
+r = await avatarUser('POST', '/api/auth/register', { name: 'Ada Obi', email: `ada-${run}@test.dev`, password: 'secret123', role: 'pro', phone: '08077778888', avatar: 'woman' });
+assert.equal(r.status, 201);
+assert.equal(r.data.user.avatar, 'woman'); ok('avatar chosen at sign-up is saved');
+
+r = await customer('GET', '/api/auth/me');
+assert.equal(r.data.user.avatar, 'initials'); ok('no choice means initials by default');
+
+r = await avatarUser('PUT', '/api/pros/me', { trade: 'Tailor', area: 'Barnawa, Kaduna', phone: '08077778888', avatar: 'man' });
+assert.equal(r.status, 200);
+r = await guest('GET', '/api/pros?trade=Tailor');
+assert.equal(r.data.pros.find((p) => p.name === 'Ada Obi').avatar, 'man'); ok('avatar can be changed on the profile and shows in search');
+
+r = await avatarUser('PUT', '/api/pros/me', { trade: 'Tailor', area: 'Barnawa, Kaduna', phone: '08077778888' });
+r = await guest('GET', '/api/pros?trade=Tailor');
+assert.equal(r.data.pros.find((p) => p.name === 'Ada Obi').avatar, 'man'); ok('saving the profile without an avatar keeps the current one');
+
 // --- assistant + misc ---
 r = await guest('POST', '/api/assistant', { text: 'my kitchen tap keeps dripping' });
 assert.equal(r.data.trade, 'Plumber'); ok('assistant suggests a trade');
@@ -156,6 +181,70 @@ assert.equal(r.status, 404); ok('unknown api route is 404 json');
 
 r = await guest('GET', '/api/jobs/abc');
 assert.equal(r.status, 404); ok('bad id is 404');
+
+// --- photos ---
+const jpeg = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0]), Buffer.alloc(64, 1)]);
+const png = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(64, 2)]);
+
+r = await guest('POST', '/api/photos', jpeg, 'image/jpeg');
+assert.equal(r.status, 401); ok('guest cannot upload');
+
+r = await pro('POST', '/api/photos', Buffer.from('this is plain text pretending to be a photo'), 'image/jpeg');
+assert.equal(r.status, 400); ok('non-image bytes rejected');
+
+r = await pro('POST', '/api/photos', Buffer.concat([Buffer.from([0xff, 0xd8, 0xff]), Buffer.alloc(1.6 * 1024 * 1024)]), 'image/jpeg');
+assert.equal(r.status, 413); ok('oversized photo rejected');
+
+r = await customer('POST', '/api/photos', jpeg, 'image/jpeg');
+assert.equal(r.status, 403); ok('customer has no work gallery');
+
+r = await pro('POST', '/api/photos', jpeg, 'image/jpeg');
+assert.equal(r.status, 201);
+const workPhoto = r.data.id; ok('pro adds work photo');
+
+const raw = await fetch(`${BASE}/api/photos/${workPhoto}`);
+assert.equal(raw.status, 200);
+assert.equal(raw.headers.get('content-type'), 'image/jpeg');
+assert.equal((await raw.arrayBuffer()).byteLength, jpeg.length); ok('photo is served publicly with the right type');
+
+r = await guest('GET', `/api/pros/${proId}`);
+assert.ok(r.data.photos.includes(workPhoto)); ok('photo appears on pro profile');
+
+r = await guest('GET', '/api/pros?trade=Plumber');
+assert.equal(r.data.pros.find((p) => p.id === proId).coverPhotoId, workPhoto); ok('cover photo appears in search results');
+
+r = await customer('POST', '/api/jobs', { trade: 'Plumber', area: 'Garki, Abuja', description: 'Bathroom pipe is leaking under the sink' });
+const photoJob = r.data.job.id;
+
+r = await other('POST', `/api/photos?jobId=${photoJob}`, png, 'image/png');
+assert.equal(r.status, 404); ok('only the job owner can add job photos');
+
+r = await pro('POST', `/api/photos?jobId=${photoJob}`, png, 'image/png');
+assert.equal(r.status, 403); ok('pro cannot add photos to a customer job');
+
+const jobPhotos = [];
+for (let i = 0; i < 3; i++) {
+  r = await customer('POST', `/api/photos?jobId=${photoJob}`, i % 2 ? png : jpeg, i % 2 ? 'image/png' : 'image/jpeg');
+  assert.equal(r.status, 201);
+  jobPhotos.push(r.data.id);
+}
+ok('customer adds 3 job photos');
+
+r = await customer('POST', `/api/photos?jobId=${photoJob}`, jpeg, 'image/jpeg');
+assert.equal(r.status, 409); ok('fourth job photo rejected');
+
+r = await guest('GET', `/api/jobs/${photoJob}`);
+assert.equal(r.data.photos.length, 3); ok('job photos appear on job page');
+
+r = await pro('DELETE', `/api/photos/${jobPhotos[0]}`);
+assert.equal(r.status, 404); ok('cannot delete someone else\'s photo');
+
+r = await customer('DELETE', `/api/photos/${jobPhotos[0]}`);
+assert.equal(r.status, 200); ok('owner deletes photo');
+
+r = await pro('DELETE', `/api/photos/${workPhoto}`);
+assert.equal(r.status, 200);
+assert.equal((await fetch(`${BASE}/api/photos/${workPhoto}`)).status, 404); ok('deleted photo is gone');
 
 r = await customer('POST', '/api/auth/logout');
 r = await customer('GET', '/api/auth/me');

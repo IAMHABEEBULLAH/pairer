@@ -56,3 +56,19 @@ CREATE INDEX IF NOT EXISTS idx_quotes_job ON quotes (job_id);
 CREATE INDEX IF NOT EXISTS idx_quotes_pro ON quotes (pro_id);
 CREATE INDEX IF NOT EXISTS idx_reviews_pro ON reviews (pro_id);
 CREATE INDEX IF NOT EXISTS idx_profiles_trade ON pro_profiles (trade);
+
+-- Photos live in Postgres (bytea) so they survive redeploys on hosts with ephemeral disks.
+-- job_id NULL means a professional's work-gallery photo; otherwise it belongs to that job.
+CREATE TABLE IF NOT EXISTS photos (
+  id         SERIAL PRIMARY KEY,
+  owner_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  job_id     INTEGER REFERENCES jobs(id) ON DELETE CASCADE,
+  mime       TEXT NOT NULL,
+  data       BYTEA NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_photos_owner ON photos (owner_id) WHERE job_id IS NULL;
+CREATE INDEX IF NOT EXISTS idx_photos_job ON photos (job_id);
+
+-- Avatar the person chose for themselves: 'woman', 'man' or 'initials' (the default).
+ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT NOT NULL DEFAULT 'initials';

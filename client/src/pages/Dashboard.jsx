@@ -4,6 +4,8 @@ import { api, naira, timeAgo } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { TRADES } from '../trades.js';
 import { Field, Notice, Loading, StatusPill, Stars } from '../components/Bits.jsx';
+import { PhotoManager } from '../components/Photos.jsx';
+import Avatar, { AvatarPicker } from '../components/Avatar.jsx';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -58,6 +60,7 @@ function CustomerJob({ job, reload }) {
         <div key={q.id} className="quote">
           <div className="row between">
             <div>
+              <Avatar name={q.proName} avatar={q.proAvatar} size={28} />
               <Link to={`/pros/${q.proId}`}><b>{q.proName}</b></Link>{' '}
               {q.reviewCount > 0 ? <><Stars value={q.rating} /> <span className="small muted">({q.reviewCount})</span></> : <span className="small muted">New pro</span>}
             </div>
@@ -131,6 +134,8 @@ function ProDashboard() {
 
       <ProfileForm user={user} onSaved={refresh} />
 
+      {user.profile && <PhotoManager proId={user.id} />}
+
       <h2 style={{ fontSize: 26, margin: '40px 0 12px' }}>My quotes</h2>
       <Notice>{error}</Notice>
       {!quotes && !error && <Loading />}
@@ -160,7 +165,7 @@ function ProDashboard() {
 
 function ProfileForm({ user, onSaved }) {
   const p = user.profile;
-  const [f, setF] = useState({ trade: p?.trade || 'Plumber', area: p?.area || '', bio: p?.bio || '', rate: p?.rate || '', phone: user.phone || '' });
+  const [f, setF] = useState({ trade: p?.trade || 'Plumber', area: p?.area || '', bio: p?.bio || '', rate: p?.rate || '', phone: user.phone || '', avatar: user.avatar || 'initials' });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
@@ -177,6 +182,7 @@ function ProfileForm({ user, onSaved }) {
   return (
     <form className="form" onSubmit={submit}>
       <h2 style={{ fontSize: 26 }}>{p ? 'Your profile' : 'Create your profile'}</h2>
+      <AvatarPicker value={f.avatar} onChange={(v) => set('avatar', v)} name={user.name} />
       <Field label="Trade"><select className="input" value={f.trade} onChange={(e) => set('trade', e.target.value)}>{TRADES.map((t) => <option key={t}>{t}</option>)}</select></Field>
       <Field label="Area or neighbourhood"><input className="input" required value={f.area} onChange={(e) => set('area', e.target.value)} placeholder="e.g. Wuse 2, Abuja" /></Field>
       <Field label="About you" hint="What you do and how long you have done it."><textarea className="input" rows={3} maxLength={500} value={f.bio} onChange={(e) => set('bio', e.target.value)} /></Field>

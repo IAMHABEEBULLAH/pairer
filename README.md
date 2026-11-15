@@ -8,9 +8,9 @@ Full stack in one repo: a React app (`client/`) and a Node + Express + PostgreSQ
 
 ## What it does
 
-**Customers** describe a problem (the job assistant suggests the right trade), post a job, compare quotes, accept one, mark the job complete, and leave a review.
+**Customers** describe a problem (the job assistant suggests the right trade), attach up to 3 photos, post a job, compare quotes, accept one, mark the job complete, and leave a review.
 
-**Professionals** create a profile, browse open jobs, send quotes, and collect reviews.
+**Professionals** create a profile with a work-photo gallery (up to 8 photos), browse open jobs, send quotes, and collect reviews.
 
 **Everyone** can search professionals by trade, name or area, and browse the open jobs board.
 
@@ -24,6 +24,7 @@ Privacy by design: pro phone numbers are visible to logged-in users only, and a 
 | Backend | Node 20+, Express 4, `pg`, Zod validation |
 | Database | PostgreSQL (schema in `server/src/schema.sql`, applied automatically on boot) |
 | Auth | Email and password (bcrypt), signed JWT in an httpOnly cookie |
+| Photos | Shrunk in the browser (max 1280px JPEG), stored in Postgres so they survive redeploys |
 | Security | Helmet (CSP), rate limiting, input validation, parameterised SQL |
 | Job assistant | Keyword matcher by default; real AI (Claude) if `ANTHROPIC_API_KEY` is set |
 
@@ -139,12 +140,18 @@ parer/
 | `POST /api/jobs` | customer | Post a job |
 | `POST /api/jobs/:id/quotes` | pro | Send or update a quote |
 | `POST /api/jobs/:id/accept`, `/complete`, `/review` | customer | Accept a quote, finish the job, review the pro |
+| `POST /api/photos` (`?jobId=` for job photos), `DELETE /api/photos/:id` | pro / customer | Upload a work photo or a job photo, delete your own |
+| `GET /api/photos/:id` | anyone | Serve a photo |
 | `POST /api/assistant` | anyone | Suggest a trade from a plain-language description |
 | `GET /api/health` | anyone | Health check |
 
+## Photos and storage
+
+Photos are stored in the Postgres database, not on the web server's disk, because Render's disk is wiped on every deploy. This is simple and fine for an early product. Browsers shrink each photo first, so a typical photo is 100 to 500 KB. If you grow to thousands of photos, move them to object storage such as Cloudinary or S3 and keep only the link in the database.
+
 ## Not built yet
 
-Payments and escrow, identity verification, photo uploads, notifications (SMS or email), password reset, and admin tools. Each is a natural next step, and payments is the most important one before charging customers.
+Payments and escrow, identity verification, notifications (SMS or email), password reset, and admin tools. Each is a natural next step, and payments is the most important one before charging customers.
 
 ## Brand
 

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { query } from '../db.js';
 import { requireRole } from '../auth.js';
 import { TRADES } from '../trades.js';
-import { ah, parseId, likePattern, phoneSchema, HttpError } from '../util.js';
+import { ah, parseId, likePattern, phoneSchema, HttpError, AVATARS } from '../util.js';
 
 const router = Router();
 
@@ -11,6 +11,7 @@ const RATING = `COALESCE((SELECT AVG(r.rating) FROM reviews r WHERE r.pro_id = u
 const REVIEW_COUNT = `(SELECT COUNT(*) FROM reviews r WHERE r.pro_id = u.id)::int`;
 const JOBS_DONE = `(SELECT COUNT(*) FROM jobs j JOIN quotes q ON q.id = j.accepted_quote_id
                      WHERE q.pro_id = u.id AND j.status = 'completed')::int`;
+const COVER_PHOTO = `(SELECT ph.id FROM photos ph WHERE ph.owner_id = u.id AND ph.job_id IS NULL ORDER BY ph.id LIMIT 1)`;
 
 const profileSchema = z.object({
   trade: z.enum(TRADES),
@@ -18,16 +19,19 @@ const profileSchema = z.object({
   bio: z.string().trim().max(500).default(''),
   rate: z.string().trim().max(60).default(''),
   phone: phoneSchema,
+  avatar: z.enum(AVATARS).optional(),
 });
 
 // Phone numbers are visible to logged-in users only.
 const shape = (row, loggedIn) => ({
   id: row.id,
   name: row.name,
+  avatar: row.avatar,
   trade: row.trade,
   area: row.area,
   bio: row.bio,
   rate: row.rate,
+  coverPhotoId: row.cover_photo_id ?? null,
   phone: loggedIn ? row.phone : null,
   rating: Math.round(row.rating * 10) / 10,
   reviewCount: row.review_count,
@@ -41,8 +45,8 @@ router.get(
     const trade = TRADES.includes(req.query.trade) ? req.query.trade : null;
     const q = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 80) : '';
     const { rows } = await query(
-      `SELECT u.id, u.name, u.phone, u.created_at AS joined_at, p.trade, p.area, p.bio, p.rate,
-              ${RATING} AS rating, ${REVIEW_COUNT} AS review_count, ${JOBS_DONE} AS jobs_done
+      `SELECT u.id, u.name, u.phone, u.avatar, u.created_at AS joined_at, p.trade, p.area, p.bio, p.rate,
+              ${RATING} AS rating, ${REVIEW_COUNT} AS review_count, ${JOBS_DONE} AS jobs_done, ${COVER_PHOTO} AS cover_photo_id
          FROM pro_profiles p JOIN users u ON u.id = p.user_id
         WHERE ($1::text IS NULL OR p.trade = $1)
           AND ($2::text IS NULL OR u.name ILIKE $2 OR p.area ILIKE $2 OR p.bio ILIKE $2 OR p.trade ILIKE $2)
@@ -60,8 +64,8 @@ router.get(
     const id = parseId(req.params.id);
     if (!id) throw new HttpError(404, 'Professional not found.');
     const { rows } = await query(
-      `SELECT u.id, u.name, u.phone, u.created_at AS joined_at, p.trade, p.area, p.bio, p.rate,
-              ${RATING} AS rating, ${REVIEW_COUNT} AS review_count, ${JOBS_DONE} AS jobs_done
+      `SELECT u.id, u.name, u.phone, u.avatar, u.created_at AS joined_at, p.trade, p.area, p.bio, p.rate,
+              ${RATING} AS rating, ${REVIEW_COUNT} AS review_count, ${JOBS_DONE} AS jobs_done, ${COVER_PHOTO} AS cover_photo_id
          FROM pro_profiles p JOIN users u ON u.id = p.user_id
         WHERE u.id = $1`,
       [id]
@@ -73,8 +77,13 @@ router.get(
         WHERE r.pro_id = $1 ORDER BY r.created_at DESC LIMIT 30`,
       [id]
     );
+    const photos = await query(
+      'SELECT id FROM photos WHERE owner_id = $1 AND job_id IS NULL ORDER BY id',
+      [id]
+    );
     res.json({
       pro: shape(rows[0], Boolean(req.user)),
+      photos: photos.rows.map((p) => p.id),
       reviews: reviews.rows.map((r) => ({
         id: r.id,
         rating: r.rating,
@@ -93,7 +102,7 @@ router.put(
   requireRole('pro'),
   ah(async (req, res) => {
     const data = profileSchema.parse(req.body);
-    await query('UPDATE users SET phone = $1 WHERE id = $2', [data.phone, req.user.id]);
+    await query('UPDATE users SET phone = $1, avatar = COALESCE($3, avatar) WHERE id = $2', [data.phone, req.user.id, data.avatar ?? null]);
     await query(
       `INSERT INTO pro_profiles (user_id, trade, area, bio, rate)
        VALUES ($1, $2, $3, $4, $5)

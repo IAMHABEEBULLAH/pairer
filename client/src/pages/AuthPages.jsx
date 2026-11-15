@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
 import { Field, Notice } from '../components/Bits.jsx';
+import { AvatarPicker } from '../components/Avatar.jsx';
 
 export function Login() {
   const { user, login } = useAuth();
@@ -44,6 +45,7 @@ export function Register() {
   const [params] = useSearchParams();
   const [role, setRole] = useState(params.get('role') === 'pro' ? 'pro' : 'customer');
   const [f, setF] = useState({ name: '', email: '', phone: '', password: '' });
+  const [avatar, setAvatar] = useState('initials');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }));
@@ -54,7 +56,7 @@ export function Register() {
     e.preventDefault();
     setBusy(true); setError('');
     try {
-      await register({ ...f, role });
+      await register({ ...f, role, avatar });
       navigate(role === 'pro' ? '/dashboard' : '/post-job', { replace: true });
     } catch (err) { setError(err.message); setBusy(false); }
   }
@@ -69,6 +71,7 @@ export function Register() {
       <form className="form" onSubmit={submit}>
         <Field label="Full name"><input className="input" autoComplete="name" required minLength={2} value={f.name} onChange={(e) => set('name', e.target.value)} /></Field>
         <Field label="Email"><input className="input" type="email" autoComplete="email" required value={f.email} onChange={(e) => set('email', e.target.value)} /></Field>
+        <AvatarPicker value={avatar} onChange={setAvatar} name={f.name} />
         <Field label={role === 'pro' ? 'Phone number' : 'Phone number (optional)'} hint={role === 'pro' ? 'Customers use this to reach you.' : 'Only shared with the pro whose quote you accept.'}>
           <input className="input" type="tel" autoComplete="tel" required={role === 'pro'} value={f.phone} onChange={(e) => set('phone', e.target.value)} placeholder="08012345678" />
         </Field>

@@ -3,6 +3,8 @@ import { Link, useParams } from 'react-router-dom';
 import { api, timeAgo } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { Stars, Loading, Notice } from '../components/Bits.jsx';
+import { Gallery } from '../components/Photos.jsx';
+import Avatar from '../components/Avatar.jsx';
 
 export default function ProDetail() {
   const { id } = useParams();
@@ -19,13 +21,16 @@ export default function ProDetail() {
   if (error) return <div className="wrap page"><Notice>{error}</Notice><p style={{ marginTop: 16 }}><Link to="/pros">Back to all professionals</Link></p></div>;
   if (!data) return <div className="wrap page"><Loading /></div>;
 
-  const { pro, reviews } = data;
+  const { pro, reviews, photos = [] } = data;
   return (
     <div className="wrap page" style={{ maxWidth: 820 }}>
       <Link to="/pros" className="small">← All professionals</Link>
       <div className="card" style={{ marginTop: 16 }}>
         <div className="row between" style={{ alignItems: 'flex-start' }}>
-          <h1 style={{ fontSize: 38 }}>{pro.name}</h1>
+          <div className="row" style={{ gap: 14, flexWrap: 'nowrap' }}>
+            <Avatar name={pro.name} avatar={pro.avatar} size={64} />
+            <h1 style={{ fontSize: 38 }}>{pro.name}</h1>
+          </div>
           <span className="pill">{pro.trade}</span>
         </div>
         <p className="muted" style={{ marginTop: 6 }}>{pro.area}</p>
@@ -43,6 +48,13 @@ export default function ProDetail() {
           )}
         </div>
       </div>
+
+      {photos.length > 0 && (
+        <>
+          <h2 style={{ fontSize: 26, margin: '32px 0 12px' }}>Recent work</h2>
+          <Gallery ids={photos} alt={`Work by ${pro.name}`} />
+        </>
+      )}
 
       <h2 style={{ fontSize: 26, margin: '32px 0 12px' }}>Reviews</h2>
       {reviews.length === 0 && <div className="empty">Reviews appear here after a customer completes a job with {pro.name.split(' ')[0]}.</div>}

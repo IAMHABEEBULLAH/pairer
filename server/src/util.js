@@ -3,6 +3,8 @@ import { z } from 'zod';
 // Express 4 does not catch rejected promises from async handlers; this does.
 export const ah = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 
+export const AVATARS = ['woman', 'man', 'initials'];
+
 export function parseId(value) {
   const n = Number(value);
   return Number.isInteger(n) && n > 0 && n < 2_147_483_647 ? n : null;

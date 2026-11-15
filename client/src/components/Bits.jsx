@@ -1,6 +1,7 @@
 import React, { useId } from 'react';
 import { Link } from 'react-router-dom';
 import { naira, timeAgo } from '../api.js';
+import Avatar from './Avatar.jsx';
 
 export function Stars({ value = 0 }) {
   const full = Math.round(value);
@@ -37,8 +38,12 @@ export function ProCard({ pro }) {
   return (
     <Link to={`/pros/${pro.id}`} className="card-link">
       <div className="card lift">
+        {pro.coverPhotoId && <img className="cover" src={`/api/photos/${pro.coverPhotoId}`} alt={`Work by ${pro.name}`} loading="lazy" />}
         <div className="row between" style={{ alignItems: 'flex-start' }}>
-          <h3 className="row" style={{ gap: 8 }}>{pro.name}{isNew && <span className="pulse-dot" title="New this week" />}</h3>
+          <div className="row" style={{ gap: 10, flexWrap: 'nowrap' }}>
+            <Avatar name={pro.name} avatar={pro.avatar} size={44} />
+            <h3 className="row" style={{ gap: 8 }}>{pro.name}{isNew && <span className="pulse-dot" title="New this week" />}</h3>
+          </div>
           <span className="pill">{pro.trade}</span>
         </div>
         <p className="small muted" style={{ marginTop: 4 }}>{pro.area}</p>

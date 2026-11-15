@@ -39,6 +39,7 @@ const quoteShape = (r, job, isOwner) => ({
   jobId: r.job_id,
   proId: r.pro_id,
   proName: r.pro_name,
+  proAvatar: r.avatar,
   trade: r.trade,
   area: r.area,
   rating: Math.round((r.rating ?? 0) * 10) / 10,
@@ -53,7 +54,7 @@ const quoteShape = (r, job, isOwner) => ({
 
 const QUOTE_SELECT = `
   SELECT q.id, q.job_id, q.pro_id, q.price_ngn, q.message, q.created_at,
-         u.name AS pro_name, u.phone, p.trade, p.area,
+         u.name AS pro_name, u.phone, u.avatar, p.trade, p.area,
          COALESCE((SELECT AVG(r.rating) FROM reviews r WHERE r.pro_id = q.pro_id), 0)::float AS rating,
          (SELECT COUNT(*) FROM reviews r WHERE r.pro_id = q.pro_id)::int AS review_count
     FROM quotes q JOIN users u ON u.id = q.pro_id LEFT JOIN pro_profiles p ON p.user_id = q.pro_id`;
@@ -150,7 +151,8 @@ router.get(
     const job = rows[0];
     if (!job) throw new HttpError(404, 'Job not found.');
     const isOwner = req.user?.id === job.customer_id;
-    const out = { job: { ...jobShape(job), isOwner } };
+    const photos = await query('SELECT id FROM photos WHERE job_id = $1 ORDER BY id', [id]);
+    const out = { job: { ...jobShape(job), isOwner }, photos: photos.rows.map((p) => p.id) };
     if (isOwner) {
       const q = await query(`${QUOTE_SELECT} WHERE q.job_id = $1 ORDER BY q.price_ngn ASC`, [id]);
       out.quotes = q.rows.map((r) => quoteShape(r, job, true));

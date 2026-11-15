@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
+import Avatar from './Avatar.jsx';
 
 export default function Nav() {
   const { user, logout } = useAuth();
@@ -31,7 +32,10 @@ export default function Nav() {
         <div className="nav-actions">
           {user ? (
             <>
-              <span className="small muted">{user.name.split(' ')[0]}</span>
+              <Link to="/dashboard" className="row small" style={{ gap: 8, flexWrap: 'nowrap', textDecoration: 'none' }} onClick={close}>
+                <Avatar name={user.name} avatar={user.avatar} size={30} />
+                <span>{user.name.split(' ')[0]}</span>
+              </Link>
               <button className="btn btn-ghost btn-sm" onClick={onLogout}>Log out</button>
             </>
           ) : (

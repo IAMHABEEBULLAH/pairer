@@ -1,12 +1,15 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useLocation } from 'react-router-dom';
 import { api, timeAgo } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { Field, Notice, Loading, StatusPill } from '../components/Bits.jsx';
+import { Gallery } from '../components/Photos.jsx';
 
 export default function JobDetail() {
   const { id } = useParams();
   const { user } = useAuth();
+  const location = useLocation();
+  const photoError = location.state?.photoError;
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
 
@@ -19,16 +22,18 @@ export default function JobDetail() {
   if (error) return <div className="wrap page"><Notice>{error}</Notice><p style={{ marginTop: 16 }}><Link to="/jobs">Back to open jobs</Link></p></div>;
   if (!data) return <div className="wrap page"><Loading /></div>;
 
-  const { job, quotes, myQuote } = data;
+  const { job, quotes, myQuote, photos = [] } = data;
   return (
     <div className="wrap page" style={{ maxWidth: 820 }}>
       <Link to="/jobs" className="small">← Open jobs</Link>
+      {photoError > 0 && <div style={{ marginTop: 12 }}><Notice>{photoError === 1 ? '1 photo could not be uploaded.' : `${photoError} photos could not be uploaded.`} Your job was posted without {photoError === 1 ? 'it' : 'them'}.</Notice></div>}
       <div className="card-outline" style={{ marginTop: 16 }}>
         <div className="row between">
           <div className="row"><span className="pill amber">{job.trade}</span><StatusPill status={job.status} /></div>
           <span className="small muted">{job.area} · {timeAgo(job.createdAt)}</span>
         </div>
         <p style={{ marginTop: 14, whiteSpace: 'pre-wrap' }}>{job.description}</p>
+        {photos.length > 0 && <div style={{ marginTop: 14 }}><Gallery ids={photos} alt="Photo of the problem" /></div>}
         <p className="small muted" style={{ marginTop: 12 }}>Posted by {job.customerName} · {job.quoteCount} quote{job.quoteCount === 1 ? '' : 's'}</p>
       </div>
 
