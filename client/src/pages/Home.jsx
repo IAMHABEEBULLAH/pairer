@@ -16,7 +16,7 @@ export default function Home() {
       <section className="hero">
         <div className="wrap hero-grid">
           <div>
-            <span className="tag-outline">Verified local pros</span>
+            <span className="tag-outline">Local skilled pros</span>
             <h1>Find people who <span>actually show up.</span></h1>
             <p className="hero-sub">
               Electricians, plumbers, carpenters, tutors and more, right in your neighbourhood. Describe the problem, compare quotes, and hire with confidence.
@@ -30,7 +30,7 @@ export default function Home() {
                 <Link key={t} className="chip" to={`/pros?trade=${t}`}>{t}</Link>
               ))}
             </div>
-            <div className="trust"><span>✓ Real reviews</span><span>✓ Compare quotes</span><span>✓ Pay only for finished work</span></div>
+            <div className="trust"><span>✓ Reviews from finished jobs</span><span>✓ Compare quotes</span><span>✓ Agree the price first</span></div>
           </div>
 
           <div className="board" aria-label="Trades on Parer">
