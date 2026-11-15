@@ -1,0 +1,15 @@
+{
+  "name": "parer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Parer: find trusted local skilled professionals, and help skilled people grow.",
+  "workspaces": ["client", "server"],
+  "scripts": {
+    "dev": "concurrently -n server,client -c green,cyan \"npm run dev -w server\" \"npm run dev -w client\"",
+    "build": "npm run build -w client",
+    "start": "npm start -w server",
+    "seed": "npm run seed -w server"
+  },
+  "engines": { "node": ">=20" },
+  "devDependencies": { "concurrently": "^9.1.2" }
+}
