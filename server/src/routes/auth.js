@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { query, pool } from '../db.js';
-import { sendEmail, resetEmail, signInEmail, appUrl } from '../email.js';
+import { sendEmail, resetEmail, appUrl } from '../email.js';
 import { startSession, endSession, requireAuth } from '../auth.js';
 import { ah, phoneSchema, HttpError, AVATARS } from '../util.js';
 
@@ -47,7 +47,7 @@ async function loadMe(userId) {
   return user;
 }
 
-ro
+router.post(
   '/register',
   ah(async (req, res) => {
     const data = registerSchema.parse(req.body);
@@ -69,86 +69,15 @@ ro
   })
 );
 
-// Tells the person by email that someone signed in. Never blocks or fails the sign-in itself.
-function notifySignIn(req, user, method) {
-  const ua = String(req.get('user-agent') || 'Unknown device').slice(0, 120);
-  const when = new Date().toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Africa/Lagos' }) + ' (Nigeria time)';
-  sendEmail({ to: user.email, ...signInEmail({ name: user.name, method, when, ip: req.ip || 'unknown', device: ua }) }).catch((err) =>
-    console.error('Sign-in email failed:', err.message)
-  );
-}
-
-const GOOGLE_ISSUERS = ['accounts.google.com', 'https://accounts.google.com'];
-const googleSchema = z.object({
-  credential: z.string().min(20).max(4000),
-  mode: z.enum(['login', 'register']).default('login'),
-  role: z.enum(['customer', 'pro']).optional(),
-  phone: z.string().trim().max(20).optional().default(''),
-});
-
-// Checks a Google ID token with Google itself, and that it was issued for our own app.
-async function verifyGoogleToken(credential) {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  if (!clientId) throw new HttpError(503, 'Google sign-in is not set up yet.');
-  const base = process.env.GOOGLE_TOKENINFO_URL || 'https://oauth2.googleapis.com/tokeninfo';
-  let info;
-  try {
-    const res = await fetch(`${base}?id_token=${encodeURIComponent(credential)}`, { signal: AbortSignal.timeout(8000) });
-    if (!res.ok) throw new Error('rejected');
-    info = await res.json();
-  } catch {
-    throw new HttpError(401, 'Google sign-in could not be verified. Please try again.');
-  }
-  const verified = info.email_verified === true || info.email_verified === 'true';
-  if (info.aud !== clientId || !GOOGLE_ISSUERS.includes(info.iss) || !verified || !info.email || Number(info.exp) * 1000 < Date.now()) {
-    throw new HttpError(401, 'Google sign-in could not be verified. Please try again.');
-  }
-  return { email: String(info.email).toLowerCase(), name: String(info.name || '').trim() };
-}
-
-router.post(
-  '/google',
-  ah(async (req, res) => {
-    const data = googleSchema.parse(req.body);
-    const g = await verifyGoogleToken(data.credential);
-    const found = await query('SELECT id, name, email, role, pw_version FROM users WHERE email = $1', [g.email]);
-
-    if (found.rows[0]) {
-      const user = found.rows[0];
-      startSession(res, user);
-      notifySignIn(req, user, 'Google');
-      return res.json({ user: await loadMe(user.id), created: false });
-    }
-
-    if (data.mode === 'login') throw new HttpError(404, 'There is no Parer account for that Google email yet. Choose Sign up first.');
-    if (!data.role) throw new HttpError(400, 'Choose whether you need a pro or you are a pro.');
-    if (data.role === 'pro' && !data.phone) throw new HttpError(400, 'Professionals need a phone number so customers can reach them.');
-    if (data.phone) {
-      const r = phoneSchema.safeParse(data.phone);
-      if (!r.success) throw new HttpError(400, r.error.issues[0].message);
-    }
-    const name = (g.name || g.email.split('@')[0]).slice(0, 80);
-    // Google accounts get a random password nobody knows. They can set one later with "Forgot password".
-    const hash = await bcrypt.hash(crypto.randomBytes(32).toString('hex'), 10);
-    const ins = await query(
-      `INSERT INTO users (name, email, password_hash, role, phone) VALUES ($1, $2, $3, $4, $5) RETURNING id, role, pw_version`,
-      [name.length >= 2 ? name : 'Parer user', g.email, hash, data.role, data.phone]
-    );
-    startSession(res, ins.rows[0]);
-    res.status(201).json({ user: await loadMe(ins.rows[0].id), created: true });
-  })
-);
-
 router.post(
   '/login',
   ah(async (req, res) => {
     const data = loginSchema.parse(req.body);
-    const { rows } = await query('SELECT id, name, email, role, pw_version, password_hash FROM users WHERE email = $1', [data.email]);
+    const { rows } = await query('SELECT id, role, pw_version, password_hash FROM users WHERE email = $1', [data.email]);
     const user = rows[0];
     const ok = user && (await bcrypt.compare(data.password, user.password_hash));
     if (!ok) throw new HttpError(401, 'Wrong email or password.');
     startSession(res, user);
-    notifySignIn(req, user, 'Email and password');
     res.json({ user: await loadMe(user.id) });
   })
 );
