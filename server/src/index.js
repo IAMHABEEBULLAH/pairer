@@ -15,6 +15,7 @@ import proRoutes from './routes/pros.js';
 import jobRoutes from './routes/jobs.js';
 import assistantRoutes from './routes/assistant.js';
 import photoRoutes from './routes/photos.js';
+import { emailConfigured } from './email.js';
 
 const app = express();
 app.set('trust proxy', 1); // Render sits behind a proxy; needed for correct client IPs.
@@ -26,11 +27,11 @@ const cspDirectives = {
 app.use(helmet({ contentSecurityPolicy: { useDefaults: true, directives: cspDirectives } }));
 app.use(express.json({ limit: '50kb' }));
 app.use(cookieParser());
-app.use(attachUser);
 
 const limiter = (windowMs, limit, message) =>
   rateLimit({ windowMs, limit, standardHeaders: 'draft-7', legacyHeaders: false, message: { error: message } });
 
+app.use('/api', attachUser);
 app.use('/api', limiter(60 * 1000, 300, 'Too many requests. Slow down and try again in a minute.'));
 
 app.get('/api/health', async (_req, res) => {
@@ -46,6 +47,8 @@ app.get('/api/health', async (_req, res) => {
 const credentialLimit = limiter(15 * 60 * 1000, 20, 'Too many attempts. Try again in a few minutes.');
 app.use('/api/auth/login', credentialLimit);
 app.use('/api/auth/register', credentialLimit);
+app.use('/api/auth/forgot', credentialLimit);
+app.use('/api/auth/reset', credentialLimit);
 app.use('/api/auth', authRoutes);
 app.use('/api/assistant', limiter(60 * 60 * 1000, 40, 'Assistant limit reached. Try again later.'), assistantRoutes);
 app.use('/api/photos', limiter(60 * 60 * 1000, 120, 'Upload limit reached. Try again later.'), photoRoutes);
@@ -86,6 +89,9 @@ const port = Number(process.env.PORT) || 3000;
 
 try {
   await migrate();
+  if (isProd && !emailConfigured()) {
+    console.warn('Email is not configured (BREVO_API_KEY or RESEND_API_KEY). Password reset emails will NOT be sent.');
+  }
   app.listen(port, () => console.log(`Parer listening on port ${port}`));
 } catch (err) {
   console.error('Failed to start:', err);

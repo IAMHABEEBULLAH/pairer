@@ -10,7 +10,7 @@ import Jobs from './pages/Jobs.jsx';
 import JobDetail from './pages/JobDetail.jsx';
 import PostJob from './pages/PostJob.jsx';
 import Dashboard from './pages/Dashboard.jsx';
-import { Login, Register } from './pages/AuthPages.jsx';
+import { Login, Register, ForgotPassword, ResetPassword } from './pages/AuthPages.jsx';
 
 function NotFound() {
   return (
@@ -48,6 +48,8 @@ export default function App() {
           <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/home" element={<Navigate to="/" replace />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -104,6 +104,9 @@ Check Render's current pricing page, because free-plan terms change.
 | `JWT_SECRET` | yes in production | Signs login cookies. The server refuses to start without it |
 | `NODE_ENV` | on Render | Set to `production` |
 | `ANTHROPIC_API_KEY` | no | Enables the real AI job assistant |
+| `BREVO_API_KEY` or `RESEND_API_KEY` | for password reset | Email provider key (HTTPS API, because Render's free tier blocks SMTP) |
+| `EMAIL_FROM` | with the key above | Sender, e.g. `Parer <hello@yourdomain.com>`. Must be verified with the provider |
+| `APP_URL` | no | Site address used in email links. Defaults to Render's own URL |
 | `ANTHROPIC_MODEL` | no | Model for the assistant (default `claude-haiku-5-5`) |
 | `PGSSL` | no | `true` or `false` to force database TLS. Default: on in production, off in development |
 | `PORT` | no | Defaults to 3000. Render sets it for you |
@@ -151,7 +154,7 @@ Photos are stored in the Postgres database, not on the web server's disk, becaus
 
 ## Not built yet
 
-Payments and escrow, identity verification, notifications (SMS or email), password reset, and admin tools. Each is a natural next step, and payments is the most important one before charging customers.
+Payments and escrow, identity verification, notifications (SMS or email), email verification, and admin tools. Each is a natural next step, and payments is the most important one before charging customers.
 
 ## Brand
 

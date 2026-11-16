@@ -72,3 +72,16 @@ CREATE INDEX IF NOT EXISTS idx_photos_job ON photos (job_id);
 
 -- Avatar the person chose for themselves: 'woman', 'man' or 'initials' (the default).
 ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT NOT NULL DEFAULT 'initials';
+
+-- Password reset: only a hash of the emailed token is stored, so a database leak cannot be used to reset accounts.
+CREATE TABLE IF NOT EXISTS password_resets (
+  id         SERIAL PRIMARY KEY,
+  user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_resets_user ON password_resets (user_id);
+
+-- Bumped whenever the password changes. Login cookies carry this number, so old sessions stop working.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS pw_version INTEGER NOT NULL DEFAULT 0;

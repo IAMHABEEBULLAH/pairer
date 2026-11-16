@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { isProd } from './env.js';
+import { query } from './db.js';
 
 const COOKIE = 'parer_token';
 const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
@@ -17,7 +18,7 @@ const cookieOptions = {
 };
 
 export function startSession(res, user) {
-  const token = jwt.sign({ sub: user.id, role: user.role }, secret, {
+  const token = jwt.sign({ sub: user.id, role: user.role, pv: user.pw_version ?? 0 }, secret, {
     algorithm: 'HS256',
     expiresIn: '30d',
   });
@@ -29,14 +30,18 @@ export function endSession(res) {
 }
 
 // Reads the session cookie if there is one. Never blocks the request.
-export function attachUser(req, _res, next) {
+// The cookie must match the account's current password version, so changing the password
+// signs out every older session. It also drops cookies for deleted accounts.
+export async function attachUser(req, _res, next) {
   const token = req.cookies?.[COOKIE];
   if (token) {
     try {
       const payload = jwt.verify(token, secret, { algorithms: ['HS256'] });
-      req.user = { id: Number(payload.sub), role: payload.role };
+      const id = Number(payload.sub);
+      const { rows } = await query('SELECT role, pw_version FROM users WHERE id = $1', [id]);
+      if (rows[0] && rows[0].pw_version === (payload.pv ?? 0)) req.user = { id, role: rows[0].role };
     } catch {
-      // expired or tampered token: treat as logged out
+      // expired, tampered, or database hiccup: treat as logged out
     }
   }
   next();
