@@ -1,27 +1,15 @@
 {
-  "name": "parer-server",
+  "name": "parer",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
+  "description": "Parer: find trusted local skilled professionals, and help skilled people grow.",
+  "workspaces": ["client", "server"],
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "node --watch src/index.js",
-    "seed": "node src/seed.js",
-    "test:smoke": "node test/smoke.mjs",
-    "test:reset": "node test/reset.mjs"
+    "dev": "concurrently -n server,client -c green,cyan \"npm run dev -w server\" \"npm run dev -w client\"",
+    "build": "npm run build -w client",
+    "start": "npm start -w server",
+    "seed": "npm run seed -w server"
   },
-  "engines": {
-    "node": ">=20"
-  },
-  "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "cookie-parser": "^1.4.7",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "express-rate-limit": "^7.5.0",
-    "helmet": "^8.0.0",
-    "jsonwebtoken": "^9.0.2",
-    "pg": "^8.13.1",
-    "zod": "^3.24.1"
-  }
+  "engines": { "node": ">=20" },
+  "devDependencies": { "concurrently": "^9.1.2" }
 }
