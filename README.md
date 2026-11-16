@@ -106,6 +106,7 @@ Check Render's current pricing page, because free-plan terms change.
 | `ANTHROPIC_API_KEY` | no | Enables the real AI job assistant |
 | `BREVO_API_KEY` or `RESEND_API_KEY` | for password reset | Email provider key (HTTPS API, because Render's free tier blocks SMTP) |
 | `EMAIL_FROM` | with the key above | Sender, e.g. `Parer <hello@yourdomain.com>`. Must be verified with the provider |
+| `GOOGLE_CLIENT_ID` | no | Turns on "Continue with Google" in the login popup. See the Google sign-in section |
 | `APP_URL` | no | Site address used in email links. Defaults to Render's own URL |
 | `ANTHROPIC_MODEL` | no | Model for the assistant (default `claude-haiku-5-5`) |
 | `PGSSL` | no | `true` or `false` to force database TLS. Default: on in production, off in development |
@@ -151,6 +152,18 @@ parer/
 ## Photos and storage
 
 Photos are stored in the Postgres database, not on the web server's disk, because Render's disk is wiped on every deploy. This is simple and fine for an early product. Browsers shrink each photo first, so a typical photo is 100 to 500 KB. If you grow to thousands of photos, move them to object storage such as Cloudinary or S3 and keep only the link in the database.
+
+## Google sign-in and sign-in alerts
+
+Log in and sign up open as a popup on any page. People can use email and password or their Google account.
+
+To turn Google on:
+1. Go to console.cloud.google.com, create a project, then APIs and Services, OAuth consent screen (External, add your app name and email).
+2. Credentials, Create credentials, OAuth client ID, type Web application.
+3. Under Authorised JavaScript origins add your site (for example `https://your-app.onrender.com`, and `http://localhost:5173` for local work). No redirect URI is needed.
+4. Copy the Client ID into the `GOOGLE_CLIENT_ID` environment variable on Render and redeploy.
+
+Google accounts are matched by email, and only emails Google has verified are accepted. Every successful login (password or Google) sends the person a "New sign-in to your Parer account" email with the time, device and a reset-password link, using the same email provider as password reset.
 
 ## Not built yet
 

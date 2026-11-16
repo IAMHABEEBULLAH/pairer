@@ -53,6 +53,8 @@ img, svg { max-width: 100%; }
 .site-header { border-bottom: 2px solid var(--ink); background: var(--paper); position: sticky; top: 0; z-index: 20; }
 .nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 20px; max-width: 1120px; margin: 0 auto; }
 .logo { font-family: 'Fjalla One', sans-serif; font-size: 26px; text-decoration: none; letter-spacing: 0.01em; line-height: 1; }
+.logo { display: inline-flex; align-items: center; gap: 8px; }
+.logo img { display: block; }
 .logo i { color: var(--lime-deep); font-style: normal; }
 .nav-links { display: flex; align-items: center; gap: 4px; }
 .nav-link { text-decoration: none; font-weight: 600; font-size: 14px; padding: 8px 14px; border-radius: 100px; transition: background 0.15s ease; }
@@ -213,3 +215,28 @@ button.thumb:hover img { transform: scale(1.04); }
 .avatar-option { display: flex; flex-direction: column; align-items: center; gap: 6px; background: transparent; border: 2px solid var(--line); border-radius: 12px; padding: 10px 14px; font-size: 13px; font-weight: 600; min-width: 84px; transition: border-color 0.15s, background 0.15s; }
 .avatar-option:hover { border-color: var(--ink); }
 .avatar-option.selected { border-color: var(--green); background: rgba(143, 201, 63, 0.18); }
+
+/* --- Login / sign-up popup --- */
+.linklike { background: none; border: 0; padding: 0; font: inherit; color: var(--green); text-decoration: underline; cursor: pointer; }
+.linklike:hover { color: var(--green-deep); }
+.btn-block { width: 100%; justify-content: center; }
+.center { text-align: center; }
+.modal-backdrop { position: fixed; inset: 0; z-index: 100; background: rgba(19, 43, 34, 0.55); display: grid; place-items: center; padding: 16px; overflow-y: auto; }
+.modal { position: relative; width: 100%; max-width: 440px; max-height: calc(100dvh - 32px); overflow-y: auto; background: var(--paper); border-radius: 18px; padding: 28px 24px 24px; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3); animation: pop 0.18s ease-out; }
+.modal h2 { margin: 0 0 4px; padding-right: 36px; }
+.modal-sub { margin: 0 0 16px; }
+.modal-close { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; border-radius: 50%; border: 0; background: var(--paper-dim); color: var(--ink); font-size: 16px; cursor: pointer; }
+.modal .form { max-width: none; }
+.modal .tabs { margin-bottom: 14px; }
+.google-box { display: flex; justify-content: center; min-height: 44px; margin-bottom: 4px; }
+.or { display: flex; align-items: center; gap: 12px; margin: 14px 0; color: #5d6b62; font-size: 13px; }
+.or::before, .or::after { content: ''; flex: 1; height: 1px; background: #d5cfb8; }
+@keyframes pop { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+@media (max-width: 560px) {
+  .modal-backdrop { align-items: end; padding: 0; }
+  .modal { max-width: none; max-height: 94dvh; border-radius: 18px 18px 0 0; padding: 24px 18px calc(24px + env(safe-area-inset-bottom)); animation: sheet 0.22s ease-out; }
+  .input, .modal input { font-size: 16px; } /* stops iOS zooming into fields */
+}
+@keyframes sheet { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .modal { animation: none; } }
+.modal:focus { outline: none; }

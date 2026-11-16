@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { TRADES, TRADE_BLURBS } from '../trades.js';
+import { useAuthModal } from '../components/AuthModal.jsx';
 
 export default function Home() {
+  const { openAuth } = useAuthModal();
   const [q, setQ] = useState('');
   const navigate = useNavigate();
 
@@ -94,14 +96,14 @@ export default function Home() {
             <li>See real jobs near you and send quotes</li>
             <li>Collect reviews and grow through repeat customers</li>
           </ul>
-          <Link to="/register?role=pro" className="btn btn-dark">Join as a pro</Link>
+          <button className="btn btn-dark" onClick={() => openAuth('register', { role: 'pro' })}>Join as a pro</button>
         </div>
       </div>
 
       <section className="cta-band">
         <div className="wrap">
           <h2>Building the digital infrastructure for skilled work.</h2>
-          <Link to="/register" className="btn btn-primary">Create a free account</Link>
+          <button className="btn btn-primary" onClick={() => openAuth('register')}>Create a free account</button>
           <div className="roadmap">
             <span className="pill lime">Now: Find and hire</span>
             <span className="pill line" style={{ color: 'var(--paper)', borderColor: 'var(--paper)' }}>Next: Payments and contracts</span>

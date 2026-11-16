@@ -27,6 +27,8 @@ services:
         generateValue: true
       - key: ANTHROPIC_API_KEY
         sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
       - key: BREVO_API_KEY
         sync: false
       - key: EMAIL_FROM

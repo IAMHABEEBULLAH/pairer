@@ -4,8 +4,10 @@ import { api, timeAgo } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { Field, Notice, Loading, StatusPill } from '../components/Bits.jsx';
 import { Gallery } from '../components/Photos.jsx';
+import { useAuthModal } from '../components/AuthModal.jsx';
 
 export default function JobDetail() {
+  const { openAuth } = useAuthModal();
   const { id } = useParams();
   const { user } = useAuth();
   const location = useLocation();
@@ -46,7 +48,7 @@ export default function JobDetail() {
 
       {!user && job.status === 'open' && (
         <p style={{ marginTop: 24 }}>
-          Are you a {job.trade.toLowerCase()}? <Link to="/register?role=pro">Create a pro account</Link> or <Link to="/login" state={{ from: `/jobs/${job.id}` }}>log in</Link> to send a quote.
+          Are you a {job.trade.toLowerCase()}? <button className="linklike" onClick={() => openAuth('register', { role: 'pro' })}>Create a pro account</button> or <button className="linklike" onClick={() => openAuth('login')}>log in</button> to send a quote.
         </p>
       )}
 

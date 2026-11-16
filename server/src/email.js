@@ -88,3 +88,22 @@ export function resetEmail({ name, link, minutes }) {
     `</div>`;
   return { subject: 'Reset your Parer password', text, html };
 }
+
+export function signInEmail({ name, method, when, ip, device }) {
+  const first = name.split(' ')[0];
+  const reset = `${appUrl()}/forgot-password`;
+  const text =
+    `Hi ${first},\n\nYou just signed in to your Parer account.\n\n` +
+    `When: ${when}\nHow: ${method}\nDevice: ${device}\nIP address: ${ip}\n\n` +
+    `If this was you, there is nothing to do.\n` +
+    `If it was not you, reset your password now: ${reset}\n\nParer`;
+  const row = (k, v) => `<tr><td style="padding:4px 16px 4px 0;color:#555">${k}</td><td style="padding:4px 0">${esc(v)}</td></tr>`;
+  const html =
+    `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;color:#132b22;line-height:1.5">` +
+    `<h2 style="margin:0 0 16px">You signed in to Parer</h2>` +
+    `<p>Hi ${esc(first)}, we noticed a sign-in to your account.</p>` +
+    `<table style="font-size:14px;border-collapse:collapse">${row('When', when)}${row('How', method)}${row('Device', device)}${row('IP address', ip)}</table>` +
+    `<p style="font-size:14px">If this was you, there is nothing to do.</p>` +
+    `<p style="font-size:14px">If it was not you, <a href="${esc(reset)}">reset your password now</a>.</p></div>`;
+  return { subject: 'New sign-in to your Parer account', text, html };
+}

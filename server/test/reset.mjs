@@ -9,7 +9,14 @@ import pg from 'pg';
 
 const run = Math.random().toString(36).slice(2, 8);
 const sent = [];
+const googleTokens = {}; // fake Google: token -> claims
 const mock = http.createServer((req, res) => {
+  if (req.url.startsWith('/tokeninfo')) {
+    const t = new URL(req.url, 'http://x').searchParams.get('id_token');
+    const claims = googleTokens[t];
+    res.writeHead(claims ? 200 : 400, { 'content-type': 'application/json' });
+    return res.end(JSON.stringify(claims || { error: 'invalid_token' }));
+  }
   let b = '';
   req.on('data', (c) => (b += c));
   req.on('end', () => { sent.push({ key: req.headers['api-key'], body: JSON.parse(b) }); res.writeHead(201); res.end('{}'); });
@@ -21,7 +28,8 @@ const BASE = `http://localhost:${port}`;
 const here = path.dirname(fileURLToPath(import.meta.url));
 const child = spawn('node', [path.join(here, '../src/index.js')], {
   env: { ...process.env, PORT: String(port), JWT_SECRET: 'test-secret', BREVO_API_KEY: 'test-key',
-    BREVO_API_URL: `http://localhost:${mock.address().port}/send`, EMAIL_FROM: 'Parer <hello@parer.test>', APP_URL: 'https://parer.test' },
+    BREVO_API_URL: `http://localhost:${mock.address().port}/send`, EMAIL_FROM: 'Parer <hello@parer.test>', APP_URL: 'https://parer.test',
+    GOOGLE_CLIENT_ID: 'test-client', GOOGLE_TOKENINFO_URL: `http://localhost:${mock.address().port}/tokeninfo` },
   stdio: ['ignore', 'inherit', 'inherit'],
 });
 const stop = () => { child.kill(); mock.close(); };
@@ -97,12 +105,57 @@ try {
   assert.equal(r.status, 400); ok('token cannot be reused');
 
   // expired token
-  const tok2 = 'e'.repeat(64);
+  const tok2 = run.padEnd(64, 'e');
   const uid = (await db.query('SELECT id FROM users WHERE email=$1', [email])).rows[0].id;
   const crypto = await import('node:crypto');
   await db.query(`INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES ($1,$2, now() - interval '1 minute')`, [uid, crypto.createHash('sha256').update(tok2).digest('hex')]);
   r = await client()('POST', '/api/auth/reset', { token: tok2, password: 'another123' });
   assert.equal(r.status, 400); ok('expired token rejected');
+
+  // ---- sign-in alert email and Google sign-in ----
+  const before = sent.length;
+  r = await client()('POST', '/api/auth/login', { email, password: 'newpass123' });
+  assert.equal(r.status, 200); await wait(before + 1);
+  assert.equal(sent.length, before + 1);
+  assert.match(sent[before].body.subject, /sign-in/i);
+  assert.match(sent[before].body.textContent, /Email and password/); ok('password login sends a sign-in email');
+
+  r = await client()('POST', '/api/auth/login', { email, password: 'wrong-wrong' });
+  await new Promise((r) => setTimeout(r, 400));
+  assert.equal(sent.length, before + 1); ok('failed login sends no email');
+
+  const exp = String(Math.floor(Date.now() / 1000) + 3600);
+  const claims = (e, extra = {}) => ({ iss: 'https://accounts.google.com', aud: 'test-client', email: e, email_verified: 'true', name: 'Gina Google', exp, ...extra });
+  const gEmail = `g-${run}@test.dev`;
+  googleTokens['t-new'.padEnd(24, 'x')] = claims(gEmail);
+  const T = (k) => k.padEnd(24, 'x');
+
+  r = await client()('POST', '/api/auth/google', { credential: T('t-new'), mode: 'login' });
+  assert.equal(r.status, 404); ok('Google login without an account is told to sign up');
+  r = await client()('POST', '/api/auth/google', { credential: T('t-new'), mode: 'register' });
+  assert.equal(r.status, 400); ok('Google sign-up needs a role');
+  r = await client()('POST', '/api/auth/google', { credential: T('t-new'), mode: 'register', role: 'pro' });
+  assert.equal(r.status, 400); ok('Google pro sign-up needs a phone');
+  const gc = client();
+  r = await gc('POST', '/api/auth/google', { credential: T('t-new'), mode: 'register', role: 'customer' });
+  assert.equal(r.status, 201); assert.equal(r.data.user.email, gEmail); assert.equal(r.data.created, true);
+  r = await gc('GET', '/api/auth/me'); assert.equal(r.status, 200); ok('Google sign-up creates the account and signs in');
+
+  const b2 = sent.length;
+  r = await client()('POST', '/api/auth/google', { credential: T('t-new'), mode: 'login' });
+  assert.equal(r.status, 200); assert.equal(r.data.created, false); await wait(b2 + 1);
+  assert.match(sent[b2].body.textContent, /Google/); ok('Google login works and sends a sign-in email');
+
+  googleTokens[T('t-other')] = claims(gEmail, { aud: 'someone-else' });
+  googleTokens[T('t-unver')] = claims(gEmail, { email_verified: 'false' });
+  googleTokens[T('t-old')] = claims(gEmail, { exp: String(Math.floor(Date.now() / 1000) - 10) });
+  for (const k of ['t-other', 't-unver', 't-old', 't-missing']) {
+    r = await client()('POST', '/api/auth/google', { credential: T(k), mode: 'login' });
+    assert.equal(r.status, 401, k);
+  }
+  ok('wrong audience, unverified email, expired and unknown tokens are rejected');
+
+  r = await client()('GET', '/api/config'); assert.equal(r.data.googleClientId, 'test-client'); ok('config exposes the Google client id');
 
   console.log(`\n${passed} checks passed`);
 } catch (e) {

@@ -22,6 +22,11 @@ app.set('trust proxy', 1); // Render sits behind a proxy; needed for correct cli
 
 const cspDirectives = {
   'img-src': ["'self'", 'data:', 'blob:'],
+  // Google's sign-in button loads a script, a frame, styles and a token request from Google.
+  'script-src': ["'self'", 'https://accounts.google.com/gsi/client'],
+  'frame-src': ["'self'", 'https://accounts.google.com/gsi/'],
+  'connect-src': ["'self'", 'https://accounts.google.com/gsi/'],
+  'style-src': ["'self'", 'https:', "'unsafe-inline'"],
   ...(isProd ? {} : { 'upgrade-insecure-requests': null }),
 };
 app.use(helmet({ contentSecurityPolicy: { useDefaults: true, directives: cspDirectives } }));
@@ -33,6 +38,8 @@ const limiter = (windowMs, limit, message) =>
 
 app.use('/api', attachUser);
 app.use('/api', limiter(60 * 1000, 300, 'Too many requests. Slow down and try again in a minute.'));
+
+app.get('/api/config', (_req, res) => res.json({ googleClientId: process.env.GOOGLE_CLIENT_ID || null }));
 
 app.get('/api/health', async (_req, res) => {
   try {

@@ -5,8 +5,10 @@ import { useAuth } from '../auth.jsx';
 import { Stars, Loading, Notice } from '../components/Bits.jsx';
 import { Gallery } from '../components/Photos.jsx';
 import Avatar from '../components/Avatar.jsx';
+import { useAuthModal } from '../components/AuthModal.jsx';
 
 export default function ProDetail() {
+  const { openAuth } = useAuthModal();
   const { id } = useParams();
   const { user } = useAuth();
   const [data, setData] = useState(null);
@@ -44,7 +46,7 @@ export default function ProDetail() {
           {pro.phone ? (
             <a className="btn btn-dark" href={`tel:${pro.phone}`}>Call {pro.phone}</a>
           ) : (
-            <p className="small muted"><Link to="/login" state={{ from: `/pros/${pro.id}` }}>Log in</Link> to see contact details, or <Link to="/post-job">post a job</Link> and let them quote you.</p>
+            <p className="small muted"><button className="linklike" onClick={() => openAuth('login')}>Log in</button> to see contact details, or <Link to="/post-job">post a job</Link> and let them quote you.</p>
           )}
         </div>
       </div>

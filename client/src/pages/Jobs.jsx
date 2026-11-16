@@ -4,8 +4,10 @@ import { api } from '../api.js';
 import { TRADES } from '../trades.js';
 import { useAuth } from '../auth.jsx';
 import { JobCard, Loading, Notice } from '../components/Bits.jsx';
+import { useAuthModal } from '../components/AuthModal.jsx';
 
 export default function Jobs() {
+  const { openAuth } = useAuthModal();
   const { user } = useAuth();
   const [params, setParams] = useSearchParams();
   const trade = params.get('trade') || '';
@@ -24,7 +26,7 @@ export default function Jobs() {
     <div className="wrap page">
       <div className="page-head">
         <h1>Open jobs</h1>
-        <p>Real requests from people nearby.{!user && <> <Link to="/register?role=pro">Join as a pro</Link> to send quotes.</>}</p>
+        <p>Real requests from people nearby.{!user && <> <button className="linklike" onClick={() => openAuth('register', { role: 'pro' })}>Join as a pro</button> to send quotes.</>}</p>
       </div>
       <div className="row" style={{ marginBottom: 24 }}>
         <select className="input" style={{ width: 220 }} value={trade} onChange={(e) => setParams(e.target.value ? { trade: e.target.value } : {})} aria-label="Trade">

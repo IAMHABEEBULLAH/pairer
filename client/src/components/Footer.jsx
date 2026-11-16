@@ -1,7 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuthModal } from './AuthModal.jsx';
 
 export default function Footer() {
+  const { openAuth } = useAuthModal();
   return (
     <footer className="footer">
       <div className="wrap row">
@@ -12,7 +14,7 @@ export default function Footer() {
         <div className="row small">
           <Link to="/pros">Find a pro</Link>
           <Link to="/jobs">Open jobs</Link>
-          <Link to="/register">Join as a pro</Link>
+          <button className="linklike" onClick={() => openAuth('register', { role: 'pro' })}>Join as a pro</button>
         </div>
       </div>
     </footer>

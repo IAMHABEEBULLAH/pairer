@@ -1,14 +1,23 @@
 import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import { useAuth } from '../auth.jsx';
+import { useAuthModal } from './AuthModal.jsx';
 
-// Sends logged-out visitors to log in, then back to where they were going.
+// Logged-out visitors get the login popup on top of this page; once signed in the page appears.
 export default function Protected({ role, children }) {
   const { user, loading } = useAuth();
-  const location = useLocation();
+  const { openAuth } = useAuthModal();
+  useEffect(() => { if (!loading && !user) openAuth('login'); }, [loading, user, openAuth]);
 
   if (loading) return <div className="wrap page"><div className="skeleton" /></div>;
-  if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  if (!user) {
+    return (
+      <div className="wrap page">
+        <div className="page-head"><h1>Please log in</h1><p>You need an account to see this page.</p></div>
+        <button className="btn btn-primary" onClick={() => openAuth('login')}>Log in or sign up</button>
+      </div>
+    );
+  }
   if (role && user.role !== role) {
     return (
       <div className="wrap page">

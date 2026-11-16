@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import Nav from './components/Nav.jsx';
 import Footer from './components/Footer.jsx';
 import Protected from './components/Protected.jsx';
@@ -10,7 +10,8 @@ import Jobs from './pages/Jobs.jsx';
 import JobDetail from './pages/JobDetail.jsx';
 import PostJob from './pages/PostJob.jsx';
 import Dashboard from './pages/Dashboard.jsx';
-import { Login, Register, ForgotPassword, ResetPassword } from './pages/AuthPages.jsx';
+import { ForgotPassword, ResetPassword } from './pages/AuthPages.jsx';
+import { useAuthModal } from './components/AuthModal.jsx';
 
 function NotFound() {
   return (
@@ -22,6 +23,14 @@ function NotFound() {
       <a className="btn btn-primary" href="/">Go to the home page</a>
     </div>
   );
+}
+
+// Old /login and /register links now open the popup over the home page.
+function OpenAuth({ mode }) {
+  const { openAuth } = useAuthModal();
+  const [params] = useSearchParams();
+  useEffect(() => { openAuth(mode, { role: params.get('role') }); }, [mode, openAuth, params]);
+  return <Navigate to="/" replace />;
 }
 
 function ScrollToTop() {
@@ -46,8 +55,8 @@ export default function App() {
           <Route path="/jobs/:id" element={<JobDetail />} />
           <Route path="/post-job" element={<Protected role="customer"><PostJob /></Protected>} />
           <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<OpenAuth mode="login" />} />
+          <Route path="/register" element={<OpenAuth mode="register" />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/home" element={<Navigate to="/" replace />} />

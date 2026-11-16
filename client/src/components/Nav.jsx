@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
 import Avatar from './Avatar.jsx';
+import { useAuthModal } from './AuthModal.jsx';
 
 export default function Nav() {
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const { openAuth } = useAuthModal();
   const close = () => setOpen(false);
   const cls = ({ isActive }) => `nav-link${isActive ? ' active' : ''}`;
 
@@ -19,7 +21,7 @@ export default function Nav() {
   return (
     <header className="site-header">
       <nav className={`nav${open ? ' open' : ''}`} aria-label="Main">
-        <Link to="/" className="logo" onClick={close}>parer<i>.</i></Link>
+        <Link to="/" className="logo" onClick={close} aria-label="Parer home"><img src="/favicon.svg" alt="" width="30" height="30" /><span>parer<i>.</i></span></Link>
         <button className="menu-btn" aria-expanded={open} aria-label="Menu" onClick={() => setOpen((o) => !o)}>
           {open ? '✕' : '☰'}
         </button>
@@ -40,8 +42,8 @@ export default function Nav() {
             </>
           ) : (
             <>
-              <Link to="/login" className="btn btn-ghost btn-sm" onClick={close}>Log in</Link>
-              <Link to="/register" className="btn btn-primary btn-sm" onClick={close}>Get started</Link>
+              <button className="btn btn-ghost btn-sm" onClick={() => { close(); openAuth('login'); }}>Log in</button>
+              <button className="btn btn-primary btn-sm" onClick={() => { close(); openAuth('register'); }}>Get started</button>
             </>
           )}
         </div>
