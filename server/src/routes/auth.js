@@ -47,7 +47,7 @@ async function loadMe(userId) {
   return user;
 }
 
-router.post(
+ro
   '/register',
   ah(async (req, res) => {
     const data = registerSchema.parse(req.body);
