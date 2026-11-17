@@ -28,6 +28,7 @@ export default function Nav() {
         <div className="nav-links">
           <NavLink to="/pros" className={cls} onClick={close}>Find a pro</NavLink>
           <NavLink to="/jobs" className={cls} onClick={close}>Open jobs</NavLink>
+          <NavLink to="/explore" className={cls} onClick={close}>Explore</NavLink>
           {(!user || user.role === 'customer') && <NavLink to="/post-job" className={cls} onClick={close}>Post a job</NavLink>}
           {user && <NavLink to="/dashboard" className={cls} onClick={close}>{user.role === 'pro' ? 'My work' : 'My jobs'}</NavLink>}
         </div>

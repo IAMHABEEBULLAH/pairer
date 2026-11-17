@@ -8,6 +8,7 @@ const router = Router();
 
 const MAX_WORK_PHOTOS = 8; // pro gallery
 const MAX_JOB_PHOTOS = 3; // per job
+const MAX_LISTING_PHOTOS = 8; // per Explore listing
 
 // Decide the type from the file's own first bytes, never from what the client claims.
 function sniffMime(buf) {
@@ -34,8 +35,15 @@ router.post(
 
     const jobId = req.query.jobId === undefined ? null : parseId(req.query.jobId);
     if (req.query.jobId !== undefined && !jobId) throw new HttpError(404, 'Job not found.');
+    const listingId = req.query.listingId === undefined ? null : parseId(req.query.listingId);
+    if (req.query.listingId !== undefined && !listingId) throw new HttpError(404, 'Listing not found.');
 
-    if (jobId) {
+    if (listingId) {
+      const own = await query('SELECT 1 FROM listings WHERE id = $1 AND owner_id = $2', [listingId, req.user.id]);
+      if (!own.rowCount) throw new HttpError(404, 'Listing not found.');
+      const count = await query('SELECT COUNT(*)::int AS n FROM photos WHERE listing_id = $1', [listingId]);
+      if (count.rows[0].n >= MAX_LISTING_PHOTOS) throw new HttpError(409, `A listing can have up to ${MAX_LISTING_PHOTOS} photos.`);
+    } else if (jobId) {
       if (req.user.role !== 'customer') throw new HttpError(403, 'Only the customer who posted a job can add photos to it.');
       const job = await query('SELECT status FROM jobs WHERE id = $1 AND customer_id = $2', [jobId, req.user.id]);
       if (!job.rowCount) throw new HttpError(404, 'Job not found.');
@@ -46,13 +54,13 @@ router.post(
       if (req.user.role !== 'pro') throw new HttpError(403, 'Only professionals have a work gallery.');
       const profile = await query('SELECT 1 FROM pro_profiles WHERE user_id = $1', [req.user.id]);
       if (!profile.rowCount) throw new HttpError(400, 'Create your professional profile before adding photos.');
-      const count = await query('SELECT COUNT(*)::int AS n FROM photos WHERE owner_id = $1 AND job_id IS NULL', [req.user.id]);
+      const count = await query('SELECT COUNT(*)::int AS n FROM photos WHERE owner_id = $1 AND job_id IS NULL AND listing_id IS NULL', [req.user.id]);
       if (count.rows[0].n >= MAX_WORK_PHOTOS) throw new HttpError(409, `Your gallery can hold up to ${MAX_WORK_PHOTOS} photos. Delete one to add another.`);
     }
 
     const { rows } = await query(
-      'INSERT INTO photos (owner_id, job_id, mime, data) VALUES ($1, $2, $3, $4) RETURNING id',
-      [req.user.id, jobId, mime, body]
+      'INSERT INTO photos (owner_id, job_id, listing_id, mime, data) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+      [req.user.id, jobId, listingId, mime, body]
     );
     res.status(201).json({ id: rows[0].id });
   })

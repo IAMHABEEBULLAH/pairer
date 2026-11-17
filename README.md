@@ -153,6 +153,14 @@ parer/
 
 Photos are stored in the Postgres database, not on the web server's disk, because Render's disk is wiped on every deploy. This is simple and fine for an early product. Browsers shrink each photo first, so a typical photo is 100 to 500 KB. If you grow to thousands of photos, move them to object storage such as Cloudinary or S3 and keep only the link in the database.
 
+## Explore: houses, cars and land
+
+Anyone signed in can post a free listing under Houses, Cars or Land (for sale, or for rent, hire or lease), with up to 8 photos. Visitors can browse and filter by category, deal type, keyword and price. The owner's phone number is shown only to signed-in people, with Call and WhatsApp buttons. Owners can close, reopen or delete their listings, and each person can have 20 active listings. Listing photos are stored in Postgres like the other photos.
+
+Routes: `/explore`, `/explore/:id`, `/explore/new`, `/explore/mine`. API: `GET /api/listings` (filters `category`, `deal`, `q`, `minPrice`, `maxPrice`), `GET /api/listings/:id`, `POST /api/listings`, `PATCH /api/listings/:id` (status), `DELETE /api/listings/:id`, `GET /api/listings/mine`, and `POST /api/photos?listingId=`.
+
+Run the API test against a running server with `BASE_URL=http://localhost:3000 npm run test:listings -w server`.
+
 ## Google sign-in and sign-in alerts
 
 Log in and sign up open as a popup on any page. People can use email and password or their Google account.

@@ -85,3 +85,25 @@ CREATE INDEX IF NOT EXISTS idx_resets_user ON password_resets (user_id);
 
 -- Bumped whenever the password changes. Login cookies carry this number, so old sessions stop working.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS pw_version INTEGER NOT NULL DEFAULT 0;
+
+-- Explore: houses, cars and land listings that any signed-in person can post.
+-- 'rent' also covers leasing land. details holds the fields that differ by category.
+CREATE TABLE IF NOT EXISTS listings (
+  id            SERIAL PRIMARY KEY,
+  owner_id      INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  category      TEXT NOT NULL CHECK (category IN ('house', 'car', 'land')),
+  deal          TEXT NOT NULL CHECK (deal IN ('sale', 'rent')),
+  title         TEXT NOT NULL,
+  price_ngn     BIGINT NOT NULL CHECK (price_ngn > 0),
+  area          TEXT NOT NULL,
+  description   TEXT NOT NULL,
+  details       JSONB NOT NULL DEFAULT '{}',
+  contact_phone TEXT NOT NULL,
+  status        TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'closed')),
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_listings_browse ON listings (status, category, deal, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_listings_owner ON listings (owner_id);
+
+ALTER TABLE photos ADD COLUMN IF NOT EXISTS listing_id INTEGER REFERENCES listings(id) ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS idx_photos_listing ON photos (listing_id);

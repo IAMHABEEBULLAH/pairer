@@ -77,6 +77,19 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="explore-band">
+        <div className="wrap">
+          <h2>Also on Parer: houses, cars and land</h2>
+          <p className="muted">Browse listings from people near you, or post your own for free.</p>
+          <div className="row" style={{ marginTop: 14 }}>
+            <Link to="/explore?category=house" className="btn btn-dark">Houses</Link>
+            <Link to="/explore?category=car" className="btn btn-dark">Cars</Link>
+            <Link to="/explore?category=land" className="btn btn-dark">Land</Link>
+            <Link to="/explore/new" className="btn btn-ghost">Post a listing</Link>
+          </div>
+        </div>
+      </section>
+
       <div className="split">
         <div>
           <span className="pill line">For households and businesses</span>

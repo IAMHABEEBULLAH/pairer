@@ -10,6 +10,7 @@ import Jobs from './pages/Jobs.jsx';
 import JobDetail from './pages/JobDetail.jsx';
 import PostJob from './pages/PostJob.jsx';
 import Dashboard from './pages/Dashboard.jsx';
+import { Explore, ListingDetail, NewListing, MyListings } from './pages/Explore.jsx';
 import { ForgotPassword, ResetPassword } from './pages/AuthPages.jsx';
 import { useAuthModal } from './components/AuthModal.jsx';
 
@@ -53,6 +54,10 @@ export default function App() {
           <Route path="/pros/:id" element={<ProDetail />} />
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/jobs/:id" element={<JobDetail />} />
+          <Route path="/explore" element={<Explore />} />
+          <Route path="/explore/new" element={<Protected><NewListing /></Protected>} />
+          <Route path="/explore/mine" element={<Protected><MyListings /></Protected>} />
+          <Route path="/explore/:id" element={<ListingDetail />} />
           <Route path="/post-job" element={<Protected role="customer"><PostJob /></Protected>} />
           <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
           <Route path="/login" element={<OpenAuth mode="login" />} />

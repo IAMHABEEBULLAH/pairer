@@ -11,7 +11,7 @@ const RATING = `COALESCE((SELECT AVG(r.rating) FROM reviews r WHERE r.pro_id = u
 const REVIEW_COUNT = `(SELECT COUNT(*) FROM reviews r WHERE r.pro_id = u.id)::int`;
 const JOBS_DONE = `(SELECT COUNT(*) FROM jobs j JOIN quotes q ON q.id = j.accepted_quote_id
                      WHERE q.pro_id = u.id AND j.status = 'completed')::int`;
-const COVER_PHOTO = `(SELECT ph.id FROM photos ph WHERE ph.owner_id = u.id AND ph.job_id IS NULL ORDER BY ph.id LIMIT 1)`;
+const COVER_PHOTO = `(SELECT ph.id FROM photos ph WHERE ph.owner_id = u.id AND ph.job_id IS NULL AND ph.listing_id IS NULL ORDER BY ph.id LIMIT 1)`;
 
 const profileSchema = z.object({
   trade: z.enum(TRADES),
@@ -78,7 +78,7 @@ router.get(
       [id]
     );
     const photos = await query(
-      'SELECT id FROM photos WHERE owner_id = $1 AND job_id IS NULL ORDER BY id',
+      'SELECT id FROM photos WHERE owner_id = $1 AND job_id IS NULL AND listing_id IS NULL ORDER BY id',
       [id]
     );
     res.json({

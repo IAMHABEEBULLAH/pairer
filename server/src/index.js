@@ -15,6 +15,7 @@ import proRoutes from './routes/pros.js';
 import jobRoutes from './routes/jobs.js';
 import assistantRoutes from './routes/assistant.js';
 import photoRoutes from './routes/photos.js';
+import listingRoutes from './routes/listings.js';
 import { emailConfigured } from './email.js';
 
 const app = express();
@@ -59,6 +60,8 @@ app.use('/api/auth/reset', credentialLimit);
 app.use('/api/auth', authRoutes);
 app.use('/api/assistant', limiter(60 * 60 * 1000, 40, 'Assistant limit reached. Try again later.'), assistantRoutes);
 app.use('/api/photos', limiter(60 * 60 * 1000, 120, 'Upload limit reached. Try again later.'), photoRoutes);
+app.post('/api/listings', limiter(60 * 60 * 1000, 30, 'Listing limit reached. Try again later.'));
+app.use('/api/listings', listingRoutes);
 app.use('/api/pros', proRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found.' }));
