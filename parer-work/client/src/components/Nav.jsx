@@ -19,23 +19,24 @@ export default function Nav() {
   }
 
   return (
-    <header className="site-header">
+    <header className="site-header market-header">
       <nav className={`nav${open ? ' open' : ''}`} aria-label="Main">
-        <Link to="/" className="logo" onClick={close} aria-label="Parer home"><img src="/favicon.svg" alt="" width="30" height="30" /><span>parer<i>.</i></span></Link>
+        <Link to="/" className="logo" onClick={close} aria-label="Parer home"><img src="/favicon.svg" alt="" width="32" height="32" /><span>Parer<i>.</i></span></Link>
         <button className="menu-btn" aria-expanded={open} aria-label="Menu" onClick={() => setOpen((o) => !o)}>
           {open ? '✕' : '☰'}
         </button>
         <div className="nav-links">
-          <NavLink to="/pros" className={cls} onClick={close}>Find a pro</NavLink>
-          <NavLink to="/jobs" className={cls} onClick={close}>Open jobs</NavLink>
-          <NavLink to="/explore" className={cls} onClick={close}>Explore</NavLink>
-          {(!user || user.role === 'customer') && <NavLink to="/post-job" className={cls} onClick={close}>Post a job</NavLink>}
-          {user && <NavLink to="/dashboard" className={cls} onClick={close}>{user.role === 'pro' ? 'My work' : 'My jobs'}</NavLink>}
+          <NavLink to="/pros" className={cls} onClick={close}>Services</NavLink>
+          <NavLink to="/explore?category=house" className={cls} onClick={close}>Properties</NavLink>
+          <NavLink to="/explore?category=car" className={cls} onClick={close}>Vehicles</NavLink>
+          <NavLink to="/explore?category=land" className={cls} onClick={close}>Land</NavLink>
+          <NavLink to="/jobs" className={cls} onClick={close}>Jobs</NavLink>
+          <NavLink to="/explore" className={cls} onClick={close}>More</NavLink>
         </div>
         <div className="nav-actions">
           {user ? (
             <>
-              <Link to="/dashboard" className="row small" style={{ gap: 8, flexWrap: 'nowrap', textDecoration: 'none' }} onClick={close}>
+              <Link to="/dashboard" className="row small market-user-link" style={{ gap: 8, flexWrap: 'nowrap', textDecoration: 'none' }} onClick={close}>
                 <Avatar name={user.name} avatar={user.avatar} size={30} />
                 <span>{user.name.split(' ')[0]}</span>
               </Link>
@@ -44,7 +45,7 @@ export default function Nav() {
           ) : (
             <>
               <button className="btn btn-ghost btn-sm" onClick={() => { close(); openAuth('login'); }}>Log in</button>
-              <button className="btn btn-primary btn-sm" onClick={() => { close(); openAuth('register'); }}>Get started</button>
+              <button className="btn btn-primary btn-sm" onClick={() => { close(); openAuth('register'); }}>Sign up</button>
             </>
           )}
         </div>
