@@ -3,6 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { TRADES, TRADE_BLURBS } from '../trades.js';
 import { useAuthModal } from '../components/AuthModal.jsx';
 
+// Put your own licensed photo at client/public/hero.jpg and it is used automatically.
+const FALLBACK_HERO = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=85';
+
 const categories = [
   { title: 'Services', detail: 'Find skilled professionals', icon: '🔧', to: '/pros', tone: 'mint' },
   { title: 'Properties', detail: 'Buy, rent or sell homes', icon: '⌂', to: '/explore?category=house', tone: 'sand' },
@@ -50,7 +53,7 @@ export default function Home() {
           </div>
           <div className="market-visual">
             <div className="market-photo-frame">
-              <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=85" alt="Contemporary modern home with landscaped garden" />
+              <img src="/hero.jpg" alt="Contemporary modern home" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = FALLBACK_HERO; }} />
               <div className="market-photo-caption"><span className="caption-dot" /> Explore what’s possible <strong>on Parer</strong></div>
             </div>
             <div className="market-float-card">

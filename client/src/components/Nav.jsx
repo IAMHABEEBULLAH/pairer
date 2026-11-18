@@ -26,6 +26,7 @@ export default function Nav() {
           {open ? '✕' : '☰'}
         </button>
         <div className="nav-links">
+          <NavLink to="/" end className={cls} onClick={close}>Home</NavLink>
           <NavLink to="/pros" className={cls} onClick={close}>Services</NavLink>
           <NavLink to="/explore?category=house" className={cls} onClick={close}>Properties</NavLink>
           <NavLink to="/explore?category=car" className={cls} onClick={close}>Vehicles</NavLink>
