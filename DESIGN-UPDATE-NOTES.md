@@ -1,20 +1,27 @@
-# Parer Premium Design Refresh
+# Parer Premium Marketplace Homepage Update
 
 ## What changed
-- Reworked the visual theme to a premium, calm palette built around deep evergreen, warm off-white, and muted green accents.
-- Updated typography to a modern Inter-led system with stronger hierarchy and tighter headline spacing.
-- Refined the sticky navigation, buttons, forms, cards, pills, and footer styling.
-- Redesigned the homepage hero, search field, trade tiles, process steps, conversational assistant preview, listing band, audience split, and closing CTA through styling overrides.
-- Improved responsive behavior for tablet and mobile, including a stacked search control and more compact trade tiles.
-- Preserved the existing React components, routes, API calls, authentication flows, and server implementation. This is a design-focused update.
+- Reworked the public homepage into a premium green-and-white marketplace landing page.
+- Added a large responsive hero with marketplace headline, search field, popular search shortcuts, and property imagery.
+- Added category cards for Services, Properties, Vehicles, Land, Jobs, and More.
+- Added separate customer and professional calls to action.
+- Added trade shortcuts and a closing signup call to action.
+- Updated navigation labels to match the marketplace categories while retaining the existing routes, auth modal, account menu, and logout flow.
+- Added responsive styles for desktop, tablet, and mobile.
 
-## Files changed
-- `client/src/index.css`
-- `client/index.html`
+## Functionality preserved
+- Professional search continues to use `/pros` and the existing query/trade parameters.
+- Property, vehicle, and land cards link to the existing `/explore?category=...` filters.
+- Jobs links to the existing `/jobs` route.
+- Login, signup, professional registration, dashboard, and logout behavior remain connected to the existing auth components and provider.
+- No backend, database schema, API, or authentication implementation was changed.
 
-## QA / testing results
-- Passed: JSON parsing for root, client, and server `package.json` files.
-- Passed: CSS brace-balance check (318 opening / 318 closing braces).
-- Passed: confirmed the original application routes and component files remain in the project unchanged.
-- Not completed: production Vite build. `npm ci` timed out while retrieving dependencies; an offline retry confirmed required packages were not cached. Running `npm run build` therefore failed with `vite: not found`. This is an environment/dependency-install limitation, not a confirmed application-code build error.
-- Recommended next check on a machine with registry access: run `npm ci`, then `npm run build`, and visually inspect the homepage and mobile layouts in the browser.
+## Validation
+- Confirmed the supplied source archive extracted successfully.
+- Confirmed category query keys `house`, `car`, and `land` are supported by the existing Explore page.
+- Confirmed the existing project routes include `/pros`, `/jobs`, and `/explore`.
+- Validated package JSON and lockfile JSON syntax, CSS brace balance, and output ZIP integrity.
+- Production build was not run: dependency installation (`npm ci`) timed out in this environment, and Vite was not available locally. Run `npm ci` followed by `npm run build` in an environment with package-registry access before deployment.
+
+## Image note
+The homepage hero uses a remotely hosted Unsplash property photograph. Replace it with a licensed brand-owned image if you have one before commercial launch.
