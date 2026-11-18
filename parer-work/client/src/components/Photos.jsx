@@ -40,6 +40,30 @@ export function Gallery({ ids, alt }) {
   );
 }
 
+/* A dashed drag-and-drop area with a "Choose photos" button. Calls onFiles with the picked image files. */
+function DropZone({ id, onFiles, disabled, busyText, hint }) {
+  const [over, setOver] = useState(false);
+  const pick = (list) => {
+    const files = Array.from(list || []).filter((f) => f.type.startsWith('image/'));
+    if (files.length) onFiles(files);
+  };
+  return (
+    <div
+      className={`dropzone${over ? ' over' : ''}${disabled ? ' disabled' : ''}`}
+      onDragOver={(e) => { e.preventDefault(); if (!disabled) setOver(true); }}
+      onDragLeave={() => setOver(false)}
+      onDrop={(e) => { e.preventDefault(); setOver(false); if (!disabled) pick(e.dataTransfer.files); }}
+    >
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="3" y="3" width="18" height="18" rx="3" /><circle cx="9" cy="9" r="1.8" /><path d="M21 16l-5-5-8 8" />
+      </svg>
+      <p className="dz-title">{busyText || <>Drag and drop photos here or <label htmlFor={id} className="dz-choose">choose photos</label></>}</p>
+      <p className="small muted">{hint}</p>
+      <input id={id} className="sr-only" type="file" accept="image/*" multiple disabled={disabled} onChange={(e) => { pick(e.target.files); e.target.value = ''; }} />
+    </div>
+  );
+}
+
 /* Chooses photos before a job exists. The parent uploads them after the job is saved. */
 export function PhotoPicker({ id, items, setItems, max = 3 }) {
   const [error, setError] = useState('');
@@ -51,9 +75,8 @@ export function PhotoPicker({ id, items, setItems, max = 3 }) {
   // Free the preview URLs when the form goes away.
   useEffect(() => () => itemsRef.current.forEach((it) => URL.revokeObjectURL(it.url)), []);
 
-  async function onPick(e) {
-    const files = Array.from(e.target.files || []).slice(0, max - items.length);
-    e.target.value = '';
+  async function addFiles(picked) {
+    const files = picked.slice(0, max - items.length);
     if (!files.length) return;
     setError('');
     setBusy(true);
@@ -77,10 +100,11 @@ export function PhotoPicker({ id, items, setItems, max = 3 }) {
 
   return (
     <div>
-      {items.length < max && (
-        <input id={id} ref={inputRef} className="input" type="file" accept="image/*" multiple disabled={busy} onChange={onPick} />
+      {items.length < max ? (
+        <DropZone id={id} onFiles={addFiles} disabled={busy} busyText={busy ? 'Preparing photos…' : null} hint={`JPG, PNG or WebP · ${items.length} of ${max} added`} />
+      ) : (
+        <p className="small muted">Photo limit reached ({max}). Remove one to add another.</p>
       )}
-      {busy && <p className="small muted" style={{ marginTop: 6 }}>Preparing photos…</p>}
       <Notice>{error}</Notice>
       {items.length > 0 && (
         <div className="photo-grid" style={{ marginTop: 10 }}>
@@ -107,9 +131,8 @@ export function PhotoManager({ proId, max = 8 }) {
   }, [proId]);
   useEffect(() => { load(); }, [load]);
 
-  async function onPick(e) {
-    const files = Array.from(e.target.files || []).slice(0, max - (ids?.length || 0));
-    e.target.value = '';
+  async function addFiles(picked) {
+    const files = picked.slice(0, max - (ids?.length || 0));
     if (!files.length) return;
     setError('');
     setBusy(true);
@@ -147,15 +170,11 @@ export function PhotoManager({ proId, max = 8 }) {
 
       {count < max ? (
         <div style={{ maxWidth: 520 }}>
-          <label htmlFor="gallery-input" className="small" style={{ fontWeight: 700, display: 'block', marginBottom: 6 }}>
-            Add photos ({count} of {max})
-          </label>
-          <input id="gallery-input" className="input" type="file" accept="image/*" multiple disabled={busy} onChange={onPick} />
+          <DropZone id="gallery-input" onFiles={addFiles} disabled={busy} busyText={busy ? 'Uploading…' : null} hint={`JPG, PNG or WebP · ${count} of ${max} added`} />
         </div>
       ) : (
         <p className="small muted">Your gallery is full ({max} photos). Delete one to add another.</p>
       )}
-      {busy && <p className="small muted" style={{ marginTop: 6 }}>Uploading…</p>}
       <div style={{ marginTop: 10 }}><Notice>{error}</Notice></div>
 
       {ids && ids.length > 0 && (
