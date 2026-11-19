@@ -9,7 +9,7 @@ import ProDetail from './pages/ProDetail.jsx';
 import Jobs from './pages/Jobs.jsx';
 import JobDetail from './pages/JobDetail.jsx';
 import PostJob from './pages/PostJob.jsx';
-import Dashboard from './pages/Dashboard.jsx';
+import Dashboard, { ProRequests } from './pages/Dashboard.jsx';
 import { Explore, ListingDetail, NewListing, MyListings } from './pages/Explore.jsx';
 import { ForgotPassword, ResetPassword } from './pages/AuthPages.jsx';
 import { useAuthModal } from './components/AuthModal.jsx';
@@ -60,6 +60,7 @@ export default function App() {
           <Route path="/explore/:id" element={<ListingDetail />} />
           <Route path="/post-job" element={<Protected role="customer"><PostJob /></Protected>} />
           <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
+          <Route path="/requests" element={<Protected><ProRequests /></Protected>} />
           <Route path="/login" element={<OpenAuth mode="login" />} />
           <Route path="/register" element={<OpenAuth mode="register" />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />

@@ -105,7 +105,7 @@ export default function Home() {
               <h3>Let your skills<br />open new doors.</h3>
               <p>Build your profile, discover available jobs and help more people find your work.</p>
               {!user && <button className="btn btn-dark" onClick={() => openAuth('register', { role: 'pro' })}>Join as a professional <span>→</span></button>}
-              {user?.role === 'pro' && <Link to="/dashboard" className="btn btn-dark">Open my dashboard <span>→</span></Link>}
+              {user?.role === 'pro' && <Link to="/requests" className="btn btn-dark">See my requests <span>→</span></Link>}
               {user?.role === 'customer' && <Link to="/post-job" className="btn btn-dark">Post a job <span>→</span></Link>}
               <div className="audience-art" aria-hidden="true">✳</div>
             </article>

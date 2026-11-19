@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { api, naira, timeAgo } from '../api.js';
 import { useAuth } from '../auth.jsx';
 import { TRADES } from '../trades.js';
@@ -118,25 +118,37 @@ function ReviewForm({ jobId, reload }) {
   );
 }
 
-/* ---------------- professional ---------------- */
+/* ---------------- professional: profile only ---------------- */
 function ProDashboard() {
   const { user, refresh } = useAuth();
-  const [quotes, setQuotes] = useState(null);
-  const [error, setError] = useState('');
-  useEffect(() => { api.get('/jobs/mine').then((d) => setQuotes(d.quotes)).catch((e) => setError(e.message)); }, []);
-
   return (
     <div className="wrap page">
       <div className="page-head">
-        <h1>My work</h1>
-        <p>{user.profile ? 'Keep your profile sharp and quote on jobs near you.' : 'Create your profile first, so customers can find you and trust your quotes.'}</p>
+        <h1>My profile</h1>
+        <p>{user.profile ? 'Keep your profile sharp so customers can find and trust you.' : 'Create your profile first, so customers can find you and trust your quotes.'}</p>
       </div>
-
       <ProfileForm user={user} onSaved={refresh} />
-
       {user.profile && <PhotoManager proId={user.id} />}
+      {user.profile && <p style={{ marginTop: 28 }}><Link className="btn btn-dark" to="/requests">See my requests</Link></p>}
+    </div>
+  );
+}
 
-      <h2 style={{ fontSize: 26, margin: '40px 0 12px' }}>My quotes</h2>
+/* ---------------- professional: requests (quotes sent and jobs won) ---------------- */
+export function ProRequests() {
+  const { user } = useAuth();
+  const [quotes, setQuotes] = useState(null);
+  const [error, setError] = useState('');
+  useEffect(() => { api.get('/jobs/mine').then((d) => setQuotes(d.quotes)).catch((e) => setError(e.message)); }, []);
+  if (user.role !== 'pro') return <Navigate to="/dashboard" replace />;
+
+  return (
+    <div className="wrap page">
+      <div className="page-head row between">
+        <div><h1>Requests</h1><p>Jobs you have quoted on, and the ones you won.</p></div>
+        <Link to="/jobs" className="btn btn-primary">Browse open jobs</Link>
+      </div>
+      {!user.profile && <div className="notice" style={{ marginBottom: 16 }}>You have no profile yet. <Link to="/dashboard">Create your profile</Link> so customers can trust your quotes.</div>}
       <Notice>{error}</Notice>
       {!quotes && !error && <Loading />}
       {quotes && quotes.length === 0 && (

@@ -66,12 +66,12 @@ function QuoteForm({ job, myQuote, hasProfile, onSaved }) {
   const [done, setDone] = useState('');
 
   if (!hasProfile) {
-    return <div className="notice error" style={{ marginTop: 24 }}>Create your professional profile on <Link to="/dashboard">My work</Link> before you send quotes.</div>;
+    return <div className="notice error" style={{ marginTop: 24 }}>Create your professional profile on <Link to="/dashboard">My profile</Link> before you send quotes.</div>;
   }
   if (job.status !== 'open') {
     return (
       <div style={{ marginTop: 24 }}>
-        {myQuote?.accepted && <Notice type="ok">Your quote was accepted. Find the customer's details on <Link to="/dashboard">My work</Link>.</Notice>}
+        {myQuote?.accepted && <Notice type="ok">Your quote was accepted. Find the customer's details on <Link to="/requests">Requests</Link>.</Notice>}
         {!myQuote?.accepted && <p className="muted">This job is no longer taking quotes.</p>}
       </div>
     );

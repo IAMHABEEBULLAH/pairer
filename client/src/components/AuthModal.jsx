@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth.jsx';
 import { api } from '../api.js';
 import { Field, Notice } from './Bits.jsx';
@@ -62,7 +62,6 @@ function GoogleButton({ clientId, mode, onCredential }) {
 function AuthModal({ initial, onClose }) {
   const { user, login, register, refresh } = useAuth();
   const navigate = useNavigate();
-  const { pathname } = useLocation();
   const [mode, setMode] = useState(initial.mode);
   const [role, setRole] = useState(initial.role);
   const [f, setF] = useState({ name: '', email: '', phone: '', password: '' });
@@ -91,7 +90,6 @@ function AuthModal({ initial, onClose }) {
 
   function afterSignIn(created, who) {
     if (created) navigate(who.role === 'pro' ? '/dashboard' : '/post-job', { replace: true });
-    else if (pathname === '/') navigate('/dashboard', { replace: true });
   }
 
   async function submit(e) {
