@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { TRADES, TRADE_BLURBS } from '../trades.js';
 import { useAuthModal } from '../components/AuthModal.jsx';
+import { useAuth } from '../auth.jsx';
 
 // Put your own licensed photo at client/public/hero.jpg and it is used automatically.
 const FALLBACK_HERO = 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=85';
@@ -17,6 +18,7 @@ const categories = [
 
 export default function Home() {
   const { openAuth } = useAuthModal();
+  const { user } = useAuth();
   const [q, setQ] = useState('');
   const navigate = useNavigate();
 
@@ -53,7 +55,7 @@ export default function Home() {
           </div>
           <div className="market-visual">
             <div className="market-photo-frame">
-              <img src="/hero.jpg" alt="Contemporary modern home" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = FALLBACK_HERO; }} />
+              <img src="/hero.jpg" alt="Contemporary modern home" onError={(e) => { const img = e.currentTarget; if (img.src.includes('unsplash')) { img.style.display = 'none'; return; } img.src = FALLBACK_HERO; }} />
               <div className="market-photo-caption"><span className="caption-dot" /> Explore what’s possible <strong>on Parer</strong></div>
             </div>
             <div className="market-float-card">
@@ -102,7 +104,9 @@ export default function Home() {
               <span className="market-audience-label">FOR PROFESSIONALS</span>
               <h3>Let your skills<br />open new doors.</h3>
               <p>Build your profile, discover available jobs and help more people find your work.</p>
-              <button className="btn btn-dark" onClick={() => openAuth('register', { role: 'pro' })}>Join as a professional <span>→</span></button>
+              {!user && <button className="btn btn-dark" onClick={() => openAuth('register', { role: 'pro' })}>Join as a professional <span>→</span></button>}
+              {user?.role === 'pro' && <Link to="/dashboard" className="btn btn-dark">Open my dashboard <span>→</span></Link>}
+              {user?.role === 'customer' && <Link to="/post-job" className="btn btn-dark">Post a job <span>→</span></Link>}
               <div className="audience-art" aria-hidden="true">✳</div>
             </article>
           </div>
@@ -126,7 +130,9 @@ export default function Home() {
       <section className="market-final-cta">
         <div className="wrap market-final-inner">
           <div><span className="market-kicker">YOUR NEXT STEP STARTS HERE</span><h2>Make your next move<br />with Parer.</h2><p>Join a marketplace built to bring people, skills and opportunities closer.</p></div>
-          <button className="btn btn-light" onClick={() => openAuth('register')}>Get started for free <span>→</span></button>
+          {!user && <button className="btn btn-light" onClick={() => openAuth('register')}>Get started for free <span>→</span></button>}
+          {user?.role === 'pro' && <Link to="/jobs" className="btn btn-light">Find open jobs <span>→</span></Link>}
+          {user?.role === 'customer' && <Link to="/post-job" className="btn btn-light">Post a job <span>→</span></Link>}
         </div>
       </section>
     </>

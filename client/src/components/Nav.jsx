@@ -33,10 +33,12 @@ export default function Nav() {
           <NavLink to="/explore?category=land" className={cls} onClick={close}>Land</NavLink>
           <NavLink to="/jobs" className={cls} onClick={close}>Jobs</NavLink>
           <NavLink to="/explore" className={cls} onClick={close}>More</NavLink>
+          {user && <NavLink to="/dashboard" className={cls} onClick={close}>{user.role === 'pro' ? 'My work' : 'My jobs'}</NavLink>}
         </div>
         <div className="nav-actions">
           {user ? (
             <>
+              {user.role === 'customer' && <Link to="/post-job" className="btn btn-primary btn-sm" onClick={close}>Post a job</Link>}
               <Link to="/dashboard" className="row small market-user-link" style={{ gap: 8, flexWrap: 'nowrap', textDecoration: 'none' }} onClick={close}>
                 <Avatar name={user.name} avatar={user.avatar} size={30} />
                 <span>{user.name.split(' ')[0]}</span>
